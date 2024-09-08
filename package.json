@@ -1,0 +1,11 @@
+{
+  "name": "cinema-seat",
+  "version": "1.0.0",
+  "description": "this is an open source platform for reserving cinema ticket.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "spr021",
+  "license": "ISC"
+}

@@ -1,11 +1,22 @@
 {
-  "name": "cinema-seat",
-  "version": "1.0.0",
-  "description": "this is an open source platform for reserving cinema ticket.",
-  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore"
   },
-  "author": "spr021",
-  "license": "ISC"
+  "devDependencies": {
+    "prettier": "^3.1.1",
+    "turbo": "^2.1.1"
+  },
+  "packageManager": "yarn@1.22.19",
+  "engines": {
+    "node": ">=18"
+  },
+  "name": "with-react-native-web"
 }

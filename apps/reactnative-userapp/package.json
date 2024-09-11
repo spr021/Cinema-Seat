@@ -1,5 +1,5 @@
 {
-  "name": "native",
+  "name": "reactnative-userapp",
   "version": "1.0.0",
   "private": true,
   "main": "index.js",
@@ -11,7 +11,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
-    "@repo/ui": "*",
+    "@this/uikit": "*",
     "expo": "^49.0.21",
     "expo-status-bar": "~1.7.0",
     "react": "^18.2.0",

@@ -1,11 +1,12 @@
 {
+  "name": "cinema-seat",
   "private": true,
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --ui tui",
     "build": "turbo run build",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore"
@@ -17,6 +18,5 @@
   "packageManager": "yarn@1.22.19",
   "engines": {
     "node": ">=18"
-  },
-  "name": "with-react-native-web"
+  }
 }

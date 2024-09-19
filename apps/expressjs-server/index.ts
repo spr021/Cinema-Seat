@@ -1,6 +1,7 @@
 import express, { Express, json, Request, Response, urlencoded } from "express"
 import dotenv from "dotenv"
 import movie from "./routes/movie.router"
+import show from "./routes/show.router"
 import mongoose from "mongoose"
 
 dotenv.config()
@@ -11,6 +12,7 @@ const port = process.env.PORT || 4000
 app.use(json())
 app.use(urlencoded({ extended: false }))
 app.use("/movie", movie)
+app.use("/show", show)
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server")

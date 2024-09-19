@@ -22,6 +22,14 @@ const MovieSchema = new Schema(
       type: String,
       required: true,
     },
+    shows: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Show",
+        },
+      ],
+    }
   },
   {
     timestamps: true,

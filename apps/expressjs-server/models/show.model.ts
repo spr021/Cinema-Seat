@@ -7,12 +7,8 @@ const ShowSchema = new Schema(
       required: true,
     },
     seats: {
-      type: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: "Seat",
-        },
-      ],
+      type: [Schema.Types.ObjectId],
+      ref: "Seat",
     },
   },
   {

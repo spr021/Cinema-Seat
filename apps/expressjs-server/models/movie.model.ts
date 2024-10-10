@@ -23,13 +23,9 @@ const MovieSchema = new Schema(
       required: true,
     },
     shows: {
-      type: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: "Show",
-        },
-      ],
-    }
+      type: [Schema.Types.ObjectId],
+      ref: "Show",
+    },
   },
   {
     timestamps: true,

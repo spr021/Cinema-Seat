@@ -2,6 +2,9 @@ import express, { Express, json, Request, Response, urlencoded } from "express"
 import dotenv from "dotenv"
 import movie from "./routes/movie.router"
 import show from "./routes/show.router"
+import seat from "./routes/seat.router"
+import user from "./routes/user.router"
+import reservation from "./routes/reservation.router"
 import mongoose from "mongoose"
 
 dotenv.config()
@@ -13,6 +16,9 @@ app.use(json())
 app.use(urlencoded({ extended: false }))
 app.use("/movie", movie)
 app.use("/show", show)
+app.use("/seat", seat)
+app.use("/reservation", reservation)
+app.use("/user", user)
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server")

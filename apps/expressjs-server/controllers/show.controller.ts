@@ -7,15 +7,16 @@ import Seat from "../models/seat.model"
 const createShows = async (req: Request, res: Response) => {
   try {
     const { movieId } = req.params
+    const { dates } = req.body
+    const dates_array = JSON.parse(dates)
 
-    const dates = req.body.dates.slice(1, -1).split(",")
-    if (!dates.length) {
+    if (!dates_array.length) {
       res.status(400).json({ message: "input at least one date" })
     }
 
     const listOfShows: any[] = []
 
-    for (const date of dates) {
+    for (const date of dates_array) {
       try {
         const seats = await Seat.create(layout1)
         listOfShows.push(new Show({ date, seats }))
@@ -24,7 +25,7 @@ const createShows = async (req: Request, res: Response) => {
       }
     }
     const shows = await Show.create(listOfShows)
-    await Movie.findByIdAndUpdate(movieId, { shows })
+    await Movie.findByIdAndUpdate(movieId, { $push: { shows } })
     res.status(200).json(shows)
   } catch (error) {
     if (error instanceof Error) {
@@ -47,6 +48,7 @@ const getShowsByMovieId = async (req: Request, res: Response) => {
     if (!shows) {
       res.status(400).json({ message: "shows not found" })
     }
+    await shows[0].populate("seats")
     res.status(200).json(shows)
   } catch (error) {
     if (error instanceof Error) {
@@ -58,7 +60,7 @@ const getShowsByMovieId = async (req: Request, res: Response) => {
 const getShowById = async (req: Request, res: Response) => {
   try {
     const { showId } = req.params
-    const show = await Show.findById(showId)
+    const show = await Show.findById(showId).populate("seats")
     if (!show) {
       res.status(500).json({ message: "show not found" })
     }

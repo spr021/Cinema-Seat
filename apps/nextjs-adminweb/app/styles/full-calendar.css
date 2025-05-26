@@ -1,0 +1,148 @@
+/* FullCalendar Custom Styles */
+.fc {
+  --fc-border-color: #e5e7eb;
+  --fc-today-bg-color: #EBF4FF;
+  --fc-neutral-bg-color: #fff;
+  --fc-list-event-hover-bg-color: #f3f4f6;
+  --fc-highlight-color: #EBF4FF;
+  --fc-page-bg-color: #fff;
+  --fc-event-bg-color: #4f46e5;
+  --fc-event-border-color: #4f46e5;
+  height: 100%;
+  background-color: var(--fc-page-bg-color);
+}
+
+/* Header Toolbar */
+.fc .fc-toolbar {
+  padding: 1.5rem;
+  margin-bottom: 0 !important;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.25rem !important;
+  font-weight: 600;
+  color: #111827;
+}
+
+.fc .fc-button-primary {
+  background-color: #fff !important;
+  border-color: #e5e7eb !important;
+  color: #374151 !important;
+  text-transform: capitalize;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.fc .fc-button-primary:not(:disabled):hover {
+  background-color: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+/* Time Grid */
+.fc .fc-timegrid-slot {
+  height: 3rem !important;
+}
+
+.fc .fc-timegrid-slot-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.fc .fc-timegrid-axis {
+  padding-right: 0.75rem;
+}
+
+.fc .fc-timegrid-now-indicator-line {
+  border-color: #ef4444;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-color: #ef4444;
+  border-width: 5px;
+}
+
+/* Events */
+.fc-event {
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.875rem;
+  border: none;
+  margin: 1px 0;
+}
+
+.fc-event-main {
+  padding: 2px 4px;
+}
+
+.fc-event-time {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.fc-event-title {
+  font-weight: 500;
+}
+
+/* Day Headers */
+.fc-col-header-cell {
+  padding: 0.75rem 0 !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  color: #374151 !important;
+  background-color: #f9fafb !important;
+}
+
+/* Today Column */
+.fc .fc-day-today {
+  background-color: var(--fc-today-bg-color) !important;
+}
+
+/* Time Slots */
+.fc .fc-timegrid-slot-minor {
+  border-top-style: dashed;
+}
+
+/* Week Numbers */
+.fc .fc-timegrid-axis-cushion {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  padding: 0.5rem;
+}
+
+/* Selection */
+.fc-highlight {
+  background-color: var(--fc-highlight-color) !important;
+  opacity: 0.3;
+}
+
+/* Scrollbar */
+.fc-scroller::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

@@ -1,6 +1,7 @@
 {
   "name": "cinema-seat",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"

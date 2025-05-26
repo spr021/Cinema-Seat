@@ -6,14 +6,17 @@ import {
   updateShowById,
   deleteShowById,
   deleteAllShowsByMovieId,
+  getAllShows,
 } from "../controllers/show.controller"
+import asyncMiddleware from "../middlewares/async"
 
 const router: Router = express.Router()
-router.post("/create/:movieId", createShows)
-router.get("/:showId", getShowById)
-router.get("/list/:movieId", getShowsByMovieId)
-router.put("/:showId", updateShowById)
-router.delete("/:showId", deleteShowById)
-router.delete("/list/:movieId", deleteAllShowsByMovieId)
+router.post("/create/:movieId", asyncMiddleware(createShows))
+router.get("/list", asyncMiddleware(getAllShows))
+router.get("/:showId", asyncMiddleware(getShowById))
+router.get("/list/:movieId", asyncMiddleware(getShowsByMovieId))
+router.delete("/:showId", asyncMiddleware(deleteShowById))
+router.put("/:showId", asyncMiddleware(updateShowById))
+router.delete("/list/:movieId", asyncMiddleware(deleteAllShowsByMovieId))
 
 export default router

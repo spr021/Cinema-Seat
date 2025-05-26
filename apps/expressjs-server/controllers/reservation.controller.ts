@@ -5,22 +5,15 @@ import Seat from "../models/seat.model"
 import { ObjectId } from "mongodb"
 
 const getReservationById = async (req: Request, res: Response) => {
-  try {
     const { reservationId } = req.params
     const reservation = await Reservation.findById(reservationId)
     if (!reservation) {
       res.status(400).json({ message: "reservation not found!" })
     }
     res.status(200).json(reservation)
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({ message: error.message })
-    }
-  }
 }
 
 const getReservationsByUserId = async (req: Request, res: Response) => {
-  try {
     const { userId } = req.params
     const reservations = await Reservation.find({ user_id: userId })
     if (!reservations) {
@@ -29,11 +22,6 @@ const getReservationsByUserId = async (req: Request, res: Response) => {
     console.log(reservations)
 
     res.status(200).json(reservations)
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({ message: error.message })
-    }
-  }
 }
 
 const releaseSeat = async (seat_id: ObjectId) => {

@@ -1,110 +1,308 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from "react-native"
+import React, { useState } from "react"
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import ParallaxScrollView from "@/components/ParallaxScrollView"
+import { ThemedText } from "@/components/ThemedText"
+import { ThemedView } from "@/components/ThemedView"
+import { CustomTabs } from "@/components/CustomTabs"
+import { Input, InputField } from "@/components/ui/input"
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
+import { Icon, CalendarDaysIcon, ChevronDownIcon } from "@/components/ui/icon"
+import { Button, ButtonText } from "@/components/ui/button"
 
 export default function TabTwoScreen() {
+  const [salutation, setSalutation] = useState("Mister")
+  const [firstName, setFirstName] = useState("Maryam")
+  const [lastName, setLastName] = useState("Mirzaiebiroundeh")
+  const [birthDate, setBirthDate] = useState("01.04.1999")
+  const [street, setStreet] = useState("")
+  const [houseNumber, setHouseNumber] = useState("")
+  const [land, setLand] = useState("Germany")
+  const [plz, setPlz] = useState("")
+  const [city, setCity] = useState("")
+  const [uciCinema, setUciCinema] = useState("")
+
+  const tabs = [
+    {
+      title: "Change My Data",
+      content: (
+        <ThemedView style={styles.tabContentContainer}>
+          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+            Personal Information
+          </ThemedText>
+          <View style={styles.inputGroup}>
+            <View style={styles.inputWrapper}>
+              <ThemedText style={styles.inputLabel}>Salutation*</ThemedText>
+              <Select
+                selectedValue={salutation}
+                onValueChange={(value) => setSalutation(value)}
+              >
+                <SelectTrigger variant="outline" size="md">
+                  <SelectInput placeholder="Select Salutation" />
+                  <SelectIcon
+                  // mr="$3"
+                  >
+                    {/* <Icon as={ChevronDownIcon} /> */}
+                  </SelectIcon>
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectBackdrop />
+                  <SelectContent>
+                    <SelectItem label="Mister" value="Mister" />
+                    <SelectItem label="Miss" value="Miss" />
+                    <SelectItem label="Diverse" value="Diverse" />
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
+            </View>
+          </View>
+
+          <View style={styles.inputRow}>
+            <View style={styles.inputWrapperHalf}>
+              <ThemedText style={styles.inputLabel}>First name*</ThemedText>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="First name"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                />
+              </Input>
+            </View>
+            <View style={styles.inputWrapperHalf}>
+              <ThemedText style={styles.inputLabel}>Last name*</ThemedText>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="Last name"
+                  value={lastName}
+                  onChangeText={setLastName}
+                />
+              </Input>
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <View style={styles.inputWrapper}>
+              <ThemedText style={styles.inputLabel}>Birth date*</ThemedText>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="DD.MM.YYYY"
+                  value={birthDate}
+                  onChangeText={setBirthDate}
+                  keyboardType="numeric"
+                />
+                <Icon as={CalendarDaysIcon} />
+              </Input>
+            </View>
+          </View>
+
+          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+            Your contact details
+          </ThemedText>
+          <View style={styles.inputRow}>
+            <View style={styles.inputWrapperFlex}>
+              <ThemedText style={styles.inputLabel}>Street</ThemedText>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="Street"
+                  value={street}
+                  onChangeText={setStreet}
+                />
+              </Input>
+            </View>
+            <View style={styles.inputWrapperSmall}>
+              <ThemedText style={styles.inputLabel}>House n...</ThemedText>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="No."
+                  value={houseNumber}
+                  onChangeText={setHouseNumber}
+                />
+              </Input>
+            </View>
+          </View>
+
+          <View style={styles.inputRow}>
+            <View style={styles.inputWrapperHalf}>
+              <ThemedText style={styles.inputLabel}>Land</ThemedText>
+              <Select
+                selectedValue={land}
+                onValueChange={(value) => setLand(value)}
+              >
+                <SelectTrigger variant="outline" size="md">
+                  <SelectInput placeholder="Select Land" />
+                  <SelectIcon
+                  //  mr="$3"
+                  >
+                    {/* <Icon as={ChevronDownIcon} /> */}
+                  </SelectIcon>
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectBackdrop />
+                  <SelectContent>
+                    <SelectItem label="Germany" value="Germany" />
+                    <SelectItem label="France" value="France" />
+                    <SelectItem label="Spain" value="Spain" />
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
+            </View>
+            <View style={styles.inputWrapperHalf}>
+              <ThemedText style={styles.inputLabel}>PLZ</ThemedText>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="PLZ"
+                  value={plz}
+                  onChangeText={setPlz}
+                  keyboardType="numeric"
+                />
+              </Input>
+            </View>
+            <View style={styles.inputWrapperHalf}>
+              <ThemedText style={styles.inputLabel}>City</ThemedText>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="City"
+                  value={city}
+                  onChangeText={setCity}
+                />
+              </Input>
+            </View>
+          </View>
+
+          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+            Your favorite UCI cinema
+          </ThemedText>
+          <View style={styles.inputGroup}>
+            <View style={styles.inputWrapper}>
+              <ThemedText style={styles.inputLabel}>Your UCI*</ThemedText>
+              <Select
+                selectedValue={uciCinema}
+                onValueChange={(value) => setUciCinema(value)}
+              >
+                <SelectTrigger variant="outline" size="md">
+                  <SelectInput placeholder="Please select" />
+                  <SelectIcon
+                  // mr="$3"
+                  >
+                    {/* <Icon as={ChevronDownIcon} /> */}
+                  </SelectIcon>
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectBackdrop />
+                  <SelectContent>
+                    <SelectItem label="UCI Cinema 1" value="uci1" />
+                    <SelectItem label="UCI Cinema 2" value="uci2" />
+                    <SelectItem label="UCI Cinema 3" value="uci3" />
+                  </SelectContent>
+                </SelectPortal>
+              </Select>
+            </View>
+          </View>
+
+          <Button action="primary" variant="solid" style={styles.saveButton}>
+            <ButtonText>SAVE DATA</ButtonText>
+          </Button>
+        </ThemedView>
+      ),
+    },
+    {
+      title: "Change Email",
+      content: (
+        <ThemedView>
+          <ThemedText type="default">Content for Change Email tab.</ThemedText>
+        </ThemedView>
+      ),
+    },
+    {
+      title: "Change Password",
+      content: (
+        <ThemedView>
+          <ThemedText type="default">
+            Content for Change Password tab.
+          </ThemedText>
+        </ThemedView>
+      ),
+    },
+    {
+      title: "Delete Account",
+      content: (
+        <ThemedView>
+          <ThemedText type="default">
+            Content for Delete Account tab.
+          </ThemedText>
+        </ThemedView>
+      ),
+    },
+  ]
+
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
+      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
+    >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
+        <ThemedText type="title">Profile</ThemedText>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
+      <CustomTabs tabs={tabs} />
     </ParallaxScrollView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
   titleContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
+    marginBottom: 20,
   },
-});
+  tabContentContainer: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  inputWrapper: {
+    marginBottom: 10,
+  },
+  inputWrapperHalf: {
+    flex: 1,
+    marginBottom: 10,
+    marginRight: 10, // Add margin for spacing between half-width inputs
+  },
+  inputWrapperFlex: {
+    flex: 2, // Adjust flex to make street wider
+    marginBottom: 10,
+    marginRight: 10,
+  },
+  inputWrapperSmall: {
+    flex: 0.8, // Adjust flex for house number
+    marginBottom: 10,
+  },
+  inputLabel: {
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  inputRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  saveButton: {
+    marginTop: 30,
+    width: "100%",
+    backgroundColor: "#FFD700", // Yellow color from the image
+  },
+})

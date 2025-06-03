@@ -1,6 +1,5 @@
-import { ScrollView, View, ActivityIndicator } from "react-native"
+import { ScrollView, View, ActivityIndicator, Text } from "react-native"
 import MovieSlider from "@/components/MovieSlider"
-import { ThemedText } from "@/components/ThemedText"
 import { useEffect, useState } from "react"
 import { Movie } from "../../types/movie" // Import the common Movie interface
 
@@ -46,7 +45,7 @@ export default function HomeScreen() {
     return (
       <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#0000ff" />
-        <ThemedText className="mt-2">Loading movies...</ThemedText>
+        <Text className="mt-2">Loading movies...</Text>
       </View>
     )
   }
@@ -54,28 +53,20 @@ export default function HomeScreen() {
   if (error) {
     return (
       <View className="flex-1 justify-center items-center p-5">
-        <ThemedText type="subtitle" className="text-red-500">
-          Error: {error}
-        </ThemedText>
+        <Text className="text-red-500">Error: {error}</Text>
       </View>
     )
   }
 
   return (
-    <ScrollView className="flex-1 pt-10">
-      <ThemedText type="title" className="ml-2.5 mb-2.5 mt-5">
-        Coming Soon
-      </ThemedText>
+    <ScrollView className="flex-1 pt-10 mb-24">
+      <Text className="ml-2.5 mb-2.5 mt-5 text-2xl font-bold">Coming Soon</Text>
       <MovieSlider movies={movies} size="big" />
 
-      <ThemedText type="title" className="ml-2.5 mb-2.5 mt-5">
-        Now Playing
-      </ThemedText>
+      <Text className="ml-2.5 mb-2.5 mt-5 text-2xl font-bold">Now Playing</Text>
       <MovieSlider movies={movies} size="small" />
 
-      <ThemedText type="title" className="ml-2.5 mb-2.5 mt-5">
-        Popular
-      </ThemedText>
+      <Text className="ml-2.5 mb-2.5 mt-5 text-2xl font-bold">Popular</Text>
       <MovieSlider movies={movies} size="small" />
     </ScrollView>
   )

@@ -1,9 +1,6 @@
-import { StyleSheet, View, TouchableOpacity } from "react-native"
+import { StyleSheet, View, Text, TouchableOpacity } from "react-native"
 import React, { useState } from "react"
-
 import ParallaxScrollView from "@/components/ParallaxScrollView"
-import { ThemedText } from "@/components/ThemedText"
-import { ThemedView } from "@/components/ThemedView"
 import { CustomTabs } from "@/components/CustomTabs"
 import { Input, InputField } from "@/components/ui/input"
 import {
@@ -35,13 +32,11 @@ export default function TabTwoScreen() {
     {
       title: "Change My Data",
       content: (
-        <ThemedView style={styles.tabContentContainer}>
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
-            Personal Information
-          </ThemedText>
+        <View style={styles.tabContentContainer}>
+          <Text style={styles.sectionTitle}>Personal Information</Text>
           <View style={styles.inputGroup}>
             <View style={styles.inputWrapper}>
-              <ThemedText style={styles.inputLabel}>Salutation*</ThemedText>
+              <Text style={styles.inputLabel}>Salutation*</Text>
               <Select
                 selectedValue={salutation}
                 onValueChange={(value) => setSalutation(value)}
@@ -68,7 +63,7 @@ export default function TabTwoScreen() {
 
           <View style={styles.inputRow}>
             <View style={styles.inputWrapperHalf}>
-              <ThemedText style={styles.inputLabel}>First name*</ThemedText>
+              <Text style={styles.inputLabel}>First name*</Text>
               <Input variant="outline" size="md">
                 <InputField
                   placeholder="First name"
@@ -78,7 +73,7 @@ export default function TabTwoScreen() {
               </Input>
             </View>
             <View style={styles.inputWrapperHalf}>
-              <ThemedText style={styles.inputLabel}>Last name*</ThemedText>
+              <Text style={styles.inputLabel}>Last name*</Text>
               <Input variant="outline" size="md">
                 <InputField
                   placeholder="Last name"
@@ -91,7 +86,7 @@ export default function TabTwoScreen() {
 
           <View style={styles.inputGroup}>
             <View style={styles.inputWrapper}>
-              <ThemedText style={styles.inputLabel}>Birth date*</ThemedText>
+              <Text style={styles.inputLabel}>Birth date*</Text>
               <Input variant="outline" size="md">
                 <InputField
                   placeholder="DD.MM.YYYY"
@@ -104,12 +99,10 @@ export default function TabTwoScreen() {
             </View>
           </View>
 
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
-            Your contact details
-          </ThemedText>
+          <Text style={styles.sectionTitle}>Your contact details</Text>
           <View style={styles.inputRow}>
             <View style={styles.inputWrapperFlex}>
-              <ThemedText style={styles.inputLabel}>Street</ThemedText>
+              <Text style={styles.inputLabel}>Street</Text>
               <Input variant="outline" size="md">
                 <InputField
                   placeholder="Street"
@@ -119,7 +112,7 @@ export default function TabTwoScreen() {
               </Input>
             </View>
             <View style={styles.inputWrapperSmall}>
-              <ThemedText style={styles.inputLabel}>House n...</ThemedText>
+              <Text style={styles.inputLabel}>House n...</Text>
               <Input variant="outline" size="md">
                 <InputField
                   placeholder="No."
@@ -132,7 +125,7 @@ export default function TabTwoScreen() {
 
           <View style={styles.inputRow}>
             <View style={styles.inputWrapperHalf}>
-              <ThemedText style={styles.inputLabel}>Land</ThemedText>
+              <Text style={styles.inputLabel}>Land</Text>
               <Select
                 selectedValue={land}
                 onValueChange={(value) => setLand(value)}
@@ -156,7 +149,7 @@ export default function TabTwoScreen() {
               </Select>
             </View>
             <View style={styles.inputWrapperHalf}>
-              <ThemedText style={styles.inputLabel}>PLZ</ThemedText>
+              <Text style={styles.inputLabel}>PLZ</Text>
               <Input variant="outline" size="md">
                 <InputField
                   placeholder="PLZ"
@@ -167,7 +160,7 @@ export default function TabTwoScreen() {
               </Input>
             </View>
             <View style={styles.inputWrapperHalf}>
-              <ThemedText style={styles.inputLabel}>City</ThemedText>
+              <Text style={styles.inputLabel}>City</Text>
               <Input variant="outline" size="md">
                 <InputField
                   placeholder="City"
@@ -178,12 +171,10 @@ export default function TabTwoScreen() {
             </View>
           </View>
 
-          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
-            Your favorite UCI cinema
-          </ThemedText>
+          <Text style={styles.sectionTitle}>Your favorite UCI cinema</Text>
           <View style={styles.inputGroup}>
             <View style={styles.inputWrapper}>
-              <ThemedText style={styles.inputLabel}>Your UCI*</ThemedText>
+              <Text style={styles.inputLabel}>Your UCI*</Text>
               <Select
                 selectedValue={uciCinema}
                 onValueChange={(value) => setUciCinema(value)}
@@ -211,52 +202,67 @@ export default function TabTwoScreen() {
           <Button action="primary" variant="solid" style={styles.saveButton}>
             <ButtonText>SAVE DATA</ButtonText>
           </Button>
-        </ThemedView>
+        </View>
       ),
     },
     {
       title: "Change Email",
       content: (
-        <ThemedView>
-          <ThemedText type="default">Content for Change Email tab.</ThemedText>
-        </ThemedView>
+        <View>
+          <Text>Content for Change Email tab.</Text>
+        </View>
       ),
     },
     {
       title: "Change Password",
       content: (
-        <ThemedView>
-          <ThemedText type="default">
-            Content for Change Password tab.
-          </ThemedText>
-        </ThemedView>
+        <View>
+          <Text>Content for Change Password tab.</Text>
+        </View>
       ),
     },
     {
       title: "Delete Account",
       content: (
-        <ThemedView>
-          <ThemedText type="default">
-            Content for Delete Account tab.
-          </ThemedText>
-        </ThemedView>
+        <View>
+          <Text>Content for Delete Account tab.</Text>
+        </View>
       ),
     },
   ]
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Profile</ThemedText>
-      </ThemedView>
-      <CustomTabs tabs={tabs} />
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <View style={styles.fixedTabsContainer}>
+        <CustomTabs tabs={tabs} />
+      </View>
+      <View style={styles.parallaxScrollView}>
+        <ParallaxScrollView
+          headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
+        >
+          {/* The content of the tabs is already within the CustomTabs component */}
+        </ParallaxScrollView>
+      </View>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  fixedTabsContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    backgroundColor: "white", // Or the background color of your header
+  },
+  parallaxScrollView: {
+    flex: 1,
+    marginTop: 50, // Adjust this value based on the height of your CustomTabs
+  },
   titleContainer: {
     flexDirection: "row",
     gap: 8,

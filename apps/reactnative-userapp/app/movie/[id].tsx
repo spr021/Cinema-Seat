@@ -14,11 +14,15 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   FilmIcon,
+  HeartIcon,
 } from "lucide-react-native"
 import { IconSymbol } from "@/components/ui/IconSymbol"
+import { useWishlist } from "@/hooks/useWishlist"
 
 function MovieDetailScreen() {
   const { id } = useLocalSearchParams()
+  const { addMovieToWishlist, removeMovieFromWishlist, isMovieInWishlist } =
+    useWishlist()
   const [movie, setMovie] = useState<Movie | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -71,13 +75,36 @@ function MovieDetailScreen() {
     )
   }
 
+  const isInWishlist = movie ? isMovieInWishlist(movie._id) : false
+
+  const handleWishlistToggle = () => {
+    if (!movie) return
+    if (isInWishlist) {
+      removeMovieFromWishlist(movie._id)
+    } else {
+      addMovieToWishlist(movie)
+    }
+  }
+
   return (
     <View className="flex-1 bg-white">
       <ScrollView className="flex-1 pb-20">
-        <Image
-          source={{ uri: movie.img }}
-          className="w-full h-[400px] object-cover"
-        />
+        <View className="relative">
+          <Image
+            source={{ uri: movie.img }}
+            className="w-full h-[400px] object-cover"
+          />
+          <TouchableOpacity
+            onPress={handleWishlistToggle}
+            className="absolute top-4 right-4 p-2 bg-black/50 rounded-full"
+          >
+            <HeartIcon
+              size={28}
+              color={isInWishlist ? "red" : "white"}
+              fill={isInWishlist ? "red" : "none"}
+            />
+          </TouchableOpacity>
+        </View>
         <View className="p-4">
           <Text className="text-3xl font-bold mb-2">{movie.title}</Text>
           <View className="flex-row items-center mb-2">

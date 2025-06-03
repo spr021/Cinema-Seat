@@ -22,6 +22,12 @@ const MovieSchema = new Schema(
       type: String,
       required: true,
     },
+    rating: {
+      type: Number,
+    },
+    summary: {
+      type: String,
+    },
     shows: {
       type: [Schema.Types.ObjectId],
       ref: "Show",

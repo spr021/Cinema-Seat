@@ -1,45 +1,9 @@
 import { ScrollView, View, ActivityIndicator, Text } from "react-native"
 import MovieSlider from "@/components/MovieSlider"
-import { useEffect, useState } from "react"
-import { Movie } from "../../types/movie" // Import the common Movie interface
+import { useMovies } from "@/hooks/useMovies"
 
 export default function HomeScreen() {
-  const [movies, setMovies] = useState<Movie[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function fetchMovies() {
-      try {
-        const response = await fetch("http://localhost:4000/movie") // Corrected API endpoint
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
-
-        const formattedMovies: Movie[] = data.map((movie: any) => ({
-          _id: movie._id,
-          title: movie.title,
-          img: movie.img, // Use posterUrl from backend
-          rating: movie.rating,
-          year: movie.year, // Use releaseDate from backend
-          description: movie.description,
-          genre: movie.genre,
-          director: movie.director,
-          actors: movie.actors,
-          trailerUrl: movie.trailerUrl,
-          duration: movie.duration,
-        }))
-        setMovies(formattedMovies)
-      } catch (error: any) {
-        setError(error.message)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchMovies()
-  }, [])
+  const { movies, isLoading, error } = useMovies()
 
   if (isLoading) {
     return (

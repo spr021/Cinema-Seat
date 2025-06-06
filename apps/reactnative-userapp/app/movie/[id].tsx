@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { useLocalSearchParams } from "expo-router"
 import {
   View,
@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native"
-import { Movie } from "../../types/movie"
 import { useRouter } from "expo-router"
 import {
   StarIcon,
@@ -19,38 +18,14 @@ import {
 } from "lucide-react-native"
 import { IconSymbol } from "@/components/ui/IconSymbol"
 import { useWishlist } from "@/hooks/useWishlist"
+import { useMovieDetail } from "@/hooks/useMovieDetail"
 
 function MovieDetailScreen() {
   const { id } = useLocalSearchParams()
   const router = useRouter()
   const { addMovieToWishlist, removeMovieFromWishlist, isMovieInWishlist } =
     useWishlist()
-  const [movie, setMovie] = useState<Movie | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function fetchMovieDetails() {
-      if (!id) return
-
-      try {
-        setIsLoading(true)
-        setError(null)
-        const response = await fetch(`http://localhost:4000/movie/${id}`)
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data: Movie = await response.json()
-        setMovie(data)
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch movie details")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchMovieDetails()
-  }, [id])
+  const { movie, isLoading, error } = useMovieDetail(id)
 
   if (isLoading) {
     return (

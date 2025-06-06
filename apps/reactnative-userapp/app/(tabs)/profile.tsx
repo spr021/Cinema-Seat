@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native"
-import React, { useState } from "react"
+import React from "react"
 import ParallaxScrollView from "@/components/ParallaxScrollView"
 import { CustomTabs } from "@/components/CustomTabs"
 import { Input, InputField } from "@/components/ui/input"
@@ -15,18 +15,31 @@ import {
 } from "@/components/ui/select"
 import { Icon, CalendarDaysIcon, ChevronDownIcon } from "@/components/ui/icon"
 import { Button, ButtonText } from "@/components/ui/button"
+import { useProfileData } from "@/hooks/useProfileData"
 
 export default function TabTwoScreen() {
-  const [salutation, setSalutation] = useState("Mister")
-  const [firstName, setFirstName] = useState("Maryam")
-  const [lastName, setLastName] = useState("Mirzaiebiroundeh")
-  const [birthDate, setBirthDate] = useState("01.04.1999")
-  const [street, setStreet] = useState("")
-  const [houseNumber, setHouseNumber] = useState("")
-  const [land, setLand] = useState("Germany")
-  const [plz, setPlz] = useState("")
-  const [city, setCity] = useState("")
-  const [uciCinema, setUciCinema] = useState("")
+  const {
+    salutation,
+    setSalutation,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    birthDate,
+    setBirthDate,
+    street,
+    setStreet,
+    houseNumber,
+    setHouseNumber,
+    land,
+    setLand,
+    plz,
+    setPlz,
+    city,
+    setCity,
+    uciCinema,
+    setUciCinema,
+  } = useProfileData()
 
   const tabs = [
     {
@@ -37,17 +50,10 @@ export default function TabTwoScreen() {
           <View style={styles.inputGroup}>
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Salutation*</Text>
-              <Select
-                selectedValue={salutation}
-                onValueChange={(value) => setSalutation(value)}
-              >
+              <Select selectedValue={salutation} onValueChange={setSalutation}>
                 <SelectTrigger variant="outline" size="md">
                   <SelectInput placeholder="Select Salutation" />
-                  <SelectIcon
-                  // mr="$3"
-                  >
-                    {/* <Icon as={ChevronDownIcon} /> */}
-                  </SelectIcon>
+                  <SelectIcon as={ChevronDownIcon} />
                 </SelectTrigger>
                 <SelectPortal>
                   <SelectBackdrop />
@@ -126,17 +132,10 @@ export default function TabTwoScreen() {
           <View style={styles.inputRow}>
             <View style={styles.inputWrapperHalf}>
               <Text style={styles.inputLabel}>Land</Text>
-              <Select
-                selectedValue={land}
-                onValueChange={(value) => setLand(value)}
-              >
+              <Select selectedValue={land} onValueChange={setLand}>
                 <SelectTrigger variant="outline" size="md">
                   <SelectInput placeholder="Select Land" />
-                  <SelectIcon
-                  //  mr="$3"
-                  >
-                    {/* <Icon as={ChevronDownIcon} /> */}
-                  </SelectIcon>
+                  <SelectIcon as={ChevronDownIcon} />
                 </SelectTrigger>
                 <SelectPortal>
                   <SelectBackdrop />
@@ -175,17 +174,10 @@ export default function TabTwoScreen() {
           <View style={styles.inputGroup}>
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Your UCI*</Text>
-              <Select
-                selectedValue={uciCinema}
-                onValueChange={(value) => setUciCinema(value)}
-              >
+              <Select selectedValue={uciCinema} onValueChange={setUciCinema}>
                 <SelectTrigger variant="outline" size="md">
                   <SelectInput placeholder="Please select" />
-                  <SelectIcon
-                  // mr="$3"
-                  >
-                    {/* <Icon as={ChevronDownIcon} /> */}
-                  </SelectIcon>
+                  <SelectIcon as={ChevronDownIcon} />
                 </SelectTrigger>
                 <SelectPortal>
                   <SelectBackdrop />

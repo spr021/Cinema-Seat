@@ -6,5 +6,6 @@ export default function error(
   res: Response,
   next: NextFunction
 ) {
-  res.status(500).json("Somthing went wrong")
+  console.error(error) // Log the error for debugging
+  res.status(500).json("Somthing went wrong") // Keep generic message for client
 }

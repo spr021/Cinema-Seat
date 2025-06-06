@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native"
 import { Movie } from "../../types/movie"
+import { useRouter } from "expo-router"
 import {
   StarIcon,
   CalendarDaysIcon,
@@ -21,6 +22,7 @@ import { useWishlist } from "@/hooks/useWishlist"
 
 function MovieDetailScreen() {
   const { id } = useLocalSearchParams()
+  const router = useRouter()
   const { addMovieToWishlist, removeMovieFromWishlist, isMovieInWishlist } =
     useWishlist()
   const [movie, setMovie] = useState<Movie | null>(null)
@@ -86,6 +88,10 @@ function MovieDetailScreen() {
     }
   }
 
+  const handleBuyTicket = () => {
+    router.push(`/movie/select-ticket/${id}`)
+  }
+
   return (
     <View className="flex-1 bg-white">
       <ScrollView className="flex-1 pb-20">
@@ -135,7 +141,10 @@ function MovieDetailScreen() {
           <Text className="text-base leading-6 mb-4">{movie.summary}</Text>
         </View>
       </ScrollView>
-      <TouchableOpacity className="w-full h-20 bg-blue-600 py-3 px-4 mt-6 flex-row items-center justify-center absolute bottom-0 left-0 right-0">
+      <TouchableOpacity
+        onPress={handleBuyTicket}
+        className="w-full h-20 bg-blue-600 py-3 px-4 mt-6 flex-row items-center justify-center absolute bottom-0 left-0 right-0"
+      >
         <Text className="text-white text-lg font-bold mr-2">Buy Ticket</Text>
         <IconSymbol size={28} name="ticket.fill" color="white" />
       </TouchableOpacity>

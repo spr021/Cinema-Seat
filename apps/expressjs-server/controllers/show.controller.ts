@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import Show from "../models/show.model"
 import Movie from "../models/movie.model"
-import { layout1 } from "../constant/seat.layout"
+import { layout1, layout2 } from "../constant/seat.layout"
 import Seat from "../models/seat.model"
 
 const createShows = async (req: Request, res: Response) => {
@@ -18,6 +18,11 @@ const createShows = async (req: Request, res: Response) => {
       case 1:
         selectedHall = layout1.seats
         break
+      case 2:
+        selectedHall = layout2.seats // Replace with actual layout2 when defined
+        break
+      default:
+        return res.status(400).json({ message: "Invalid hallId" })
     }
 
     const seats = await Seat.create(selectedHall)

@@ -177,7 +177,8 @@ export default function Shows() {
           },
           body: JSON.stringify({
             date: newShow.start,
-            hallId: newShow.hallId,
+            hall_id: newShow.hallId,
+            movie_id: newShow.movieId,
           }),
         }
       )

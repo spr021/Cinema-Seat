@@ -9,7 +9,7 @@ import {
 import { Colors } from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
 
-interface Tab {
+export interface Tab {
   title: string
   content: React.ReactNode
 }

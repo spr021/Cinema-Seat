@@ -1,9 +1,7 @@
 import { Movie } from "@/types/movie" // Assuming Movie interface is defined here or will be moved
 
-const API_BASE_URL = "http://localhost:4000"
-
 export async function fetchAllMovies(): Promise<Movie[]> {
-  const response = await fetch(`${API_BASE_URL}/movie`)
+  const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/movie`)
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
@@ -28,7 +26,9 @@ export async function fetchAllMovies(): Promise<Movie[]> {
 }
 
 export async function fetchMovieById(movieId: string): Promise<Movie> {
-  const response = await fetch(`${API_BASE_URL}/movie/${movieId}`)
+  const response = await fetch(
+    `${process.env.EXPO_PUBLIC_API_BASE_URL}/movie/${movieId}`
+  )
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }

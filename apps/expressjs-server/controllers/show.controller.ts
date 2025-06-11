@@ -6,7 +6,7 @@ import Seat from "../models/seat.model"
 
 const createShows = async (req: Request, res: Response) => {
   const { movieId } = req.params
-  const { date, hallId } = req.body
+  const { date, hall_id, movie_id } = req.body
 
   if (!date) {
     res.status(400).json({ message: "input at least one date" })
@@ -14,7 +14,7 @@ const createShows = async (req: Request, res: Response) => {
 
   try {
     let selectedHall = null
-    switch (+hallId) {
+    switch (+hall_id) {
       case 1:
         selectedHall = layout1.seats
         break
@@ -26,7 +26,7 @@ const createShows = async (req: Request, res: Response) => {
     }
 
     const seats = await Seat.create(selectedHall)
-    const show = await Show.create({ date, seats })
+    const show = await Show.create({ date, seats, movie_id, hall_id })
     await Movie.findByIdAndUpdate(movieId, { $push: { shows: show._id } })
     res.status(200).json(show)
   } catch (error) {

@@ -6,9 +6,10 @@ import seat from "./routes/seat.router"
 import hall from "./routes/hall.router"
 import auth from "./routes/auth.router"
 import reservation from "./routes/reservation.router"
+import ticket from "./routes/ticket.router" // Import the new ticket router
 import mongoose from "mongoose"
 import error from "./middlewares/error"
-import cors from 'cors'
+import cors from "cors"
 
 dotenv.config()
 
@@ -23,6 +24,7 @@ app.use("/show", show)
 app.use("/seat", seat)
 app.use("/hall", hall)
 app.use("/reservation", reservation)
+app.use("/ticket", ticket) // Register the new ticket router
 app.use("/auth", auth)
 
 app.get("/", (req: Request, res: Response) => {

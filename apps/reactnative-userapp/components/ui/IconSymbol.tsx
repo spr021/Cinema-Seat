@@ -27,6 +27,7 @@ const MAPPING = {
   "star.fill": "star", // Added for filled stars
   "star.leadinghalf.fill": "star-half", // Added for half stars
   star: "star-border", // Added for empty stars
+  "rectangle.portrait.and.arrow.right": "logout",
 } as IconMapping
 
 /**

@@ -7,17 +7,37 @@ import {
   updateUserById,
   deleteUserById,
   getSession,
+  getUserProfile,
+  updateUserProfile,
+  verifyPassword,
 } from "../controllers/auth.controller"
 import asyncMiddleware from "../middlewares/async"
-import { authenticateToken, authorizeRoles } from "../middlewares/auth.middleware"
+import {
+  authenticateToken,
+  authorizeRoles,
+} from "../middlewares/auth.middleware"
 
 const router: Router = express.Router()
 
 router.post("/register", asyncMiddleware(register))
-router.get("/login", asyncMiddleware(login))
-// router.get(protectedRoute, "/:id", asyncMiddleware(getUser))
-router.put("/:id", asyncMiddleware(updateUserById))
-router.delete("/:id", asyncMiddleware(deleteUserById))
-router.get('/session', authenticateToken, authorizeRoles(['admin']),  asyncMiddleware(getSession));
+router.post("/login", asyncMiddleware(login))
+
+router.get("/profile", authenticateToken, asyncMiddleware(getUserProfile))
+router.put("/profile", authenticateToken, asyncMiddleware(updateUserProfile))
+router.post(
+  "/verify-password",
+  authenticateToken,
+  asyncMiddleware(verifyPassword)
+)
+
+router.get("/:id", authenticateToken, asyncMiddleware(getUser))
+router.put("/:id", authenticateToken, asyncMiddleware(updateUserById))
+router.delete("/:id", authenticateToken, asyncMiddleware(deleteUserById))
+router.get(
+  "/session",
+  authenticateToken,
+  authorizeRoles(["admin"]),
+  asyncMiddleware(getSession)
+)
 
 export default router

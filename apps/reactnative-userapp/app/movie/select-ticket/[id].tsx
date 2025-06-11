@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { View, Text, ActivityIndicator, Alert, ScrollView } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { IconSymbol } from "@/components/ui/IconSymbol"
@@ -7,13 +7,19 @@ import { DatePicker } from "@/components/select-ticket/DatePicker"
 import { TimeSelector } from "@/components/select-ticket/TimeSelector"
 import { SeatSelector } from "@/components/select-ticket/SeatSelector"
 import { useShowData } from "@/hooks/useShowData"
-import { reserveSeats } from "@/services/showService"
 import { getFormattedDate, getFormattedTime } from "@/utils/date"
+import {
+  createReservation,
+  markReservationAsPaid,
+} from "@/services/reservationService" // Import createReservation and markReservationAsPaid
+import { useAuth } from "@/context/AuthContext" // Import useAuth
 
 export default function SelectTicketScreen() {
   const { id } = useLocalSearchParams()
   const router = useRouter()
+  const { user, token } = useAuth() // Get user and token from AuthContext
   const [selectedSeats, setSelectedSeats] = useState<string[]>([])
+  const [isReserving, setIsReserving] = useState<boolean>(false) // Local loading state for reservation
 
   const {
     selectedDate,
@@ -45,10 +51,17 @@ export default function SelectTicketScreen() {
       return
     }
 
-    // Set loading state for the button action
-    // This isLoading is separate from the useShowData's isLoading
-    // as it pertains to the reservation process.
-    // I'll introduce a local loading state for this.
+    if (!user || !token) {
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to make a reservation."
+      )
+      router.push("/auth/login") // Redirect to login if not authenticated
+      return
+    }
+
+    setIsReserving(true) // Start loading
+
     const currentShow = shows.find(
       (show) =>
         getFormattedDate(show.date) === selectedDate &&
@@ -58,6 +71,7 @@ export default function SelectTicketScreen() {
 
     if (!currentShow) {
       Alert.alert("Error", "Selected show not found.")
+      setIsReserving(false) // End loading
       return
     }
 
@@ -75,9 +89,11 @@ export default function SelectTicketScreen() {
         throw new Error("Some selected seats could not be found.")
       }
 
-      const result = await reserveSeats(
+      const result = await createReservation(
+        currentShow._id, // Pass the show ID
         seatIdsToReserve,
-        "60d5ecf7b7e1c20015a4a1b2" // Placeholder for actual user ID
+        user.id, // Pass the actual user ID
+        token // Pass the authentication token
       )
 
       if (result.success) {
@@ -85,22 +101,76 @@ export default function SelectTicketScreen() {
           "Reservation Successful",
           `Seats ${selectedSeats.join(
             ", "
-          )} reserved for show on ${selectedDate} at ${selectedTime}.`
+          )} reserved for show on ${selectedDate} at ${selectedTime}.`,
+          [
+            {
+              text: "OK",
+              onPress: async () => {
+                // Simulate payment confirmation
+                Alert.alert(
+                  "Payment Confirmation",
+                  "Do you want to mark this reservation as paid?",
+                  [
+                    {
+                      text: "Cancel",
+                      style: "cancel",
+                      onPress: () => router.push("/(tabs)/my-tickets"),
+                    },
+                    {
+                      text: "Confirm Payment",
+                      onPress: async () => {
+                        if (result.reservation?._id) {
+                          const paymentResult = await markReservationAsPaid(
+                            result.reservation._id,
+                            token
+                          )
+                          if (paymentResult.success) {
+                            Alert.alert(
+                              "Payment Successful",
+                              paymentResult.message
+                            )
+                            router.push("/(tabs)/my-tickets")
+                          } else {
+                            Alert.alert(
+                              "Payment Failed",
+                              paymentResult.message ||
+                                "Could not mark reservation as paid."
+                            )
+                          }
+                        } else {
+                          Alert.alert(
+                            "Error",
+                            "Reservation ID not found for payment."
+                          )
+                        }
+                      },
+                    },
+                  ]
+                )
+              },
+            },
+          ]
         )
-        router.push("/(tabs)/my-tickets")
       } else {
         Alert.alert(
           "Reservation Failed",
-          result.message || "Failed to reserve seats."
+          result.message || "Failed to create reservation."
         )
       }
     } catch (err: any) {
       Alert.alert(
         "Reservation Failed",
-        err.message || "Failed to reserve seats."
+        err.message || "Failed to create reservation."
       )
+    } finally {
+      setIsReserving(false) // End loading
     }
   }
+
+  useEffect(() => {
+    // Reset selected seats when date or time changes
+    setSelectedSeats([])
+  }, [selectedDate, selectedTime])
 
   return (
     <View className="flex-1 bg-white">
@@ -139,14 +209,14 @@ export default function SelectTicketScreen() {
           variant="solid"
           onPress={handleProceedToPay}
           disabled={
-            isLoading ||
+            isReserving || // Disable button during reservation
             !selectedDate ||
             !selectedTime ||
             selectedSeats.length === 0
           }
           className="w-full h-20 bg-blue-600 absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 flex-1 justify-center items-center"
         >
-          {isLoading ? (
+          {isReserving ? ( // Use isReserving for button loading indicator
             <ActivityIndicator color="white" />
           ) : (
             <>

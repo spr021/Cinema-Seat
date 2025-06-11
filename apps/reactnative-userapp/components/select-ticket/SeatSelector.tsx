@@ -83,12 +83,12 @@ export function SeatSelector({
         </View>
       ) : (
         <View className="flex-col items-center">
-          {uniqueRows.map((row) => {
+          {uniqueRows.map((row, index) => {
             const seatsInRow = getSeatsInRow(row)
             return (
-              <View key={row} className="flex-row items-center mb-1">
+              <View key={index} className="flex-row items-center mb-1">
                 {seatsInRow.map((seatNum, index) => (
-                  <React.Fragment key={`${row}-${seatNum}`}>
+                  <React.Fragment key={index}>
                     {renderSeat(row, seatNum)}
                     {index === Math.floor(seatsInRow.length / 2) - 1 && (
                       <View key={`space-${row}-${index}`} className="w-5" />

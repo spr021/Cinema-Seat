@@ -6,9 +6,12 @@ import { IconSymbol } from "@/components/ui/IconSymbol"
 import TabBarBackground from "@/components/ui/TabBarBackground"
 import { Colors } from "@/constants/Colors"
 import { useColorScheme } from "@/hooks/useColorScheme"
+import { useAuth } from "@/context/AuthContext"
+import { Button } from "@/components/ui/button"
 
 export default function TabLayout() {
   const colorScheme = useColorScheme()
+  const { logout } = useAuth()
 
   return (
     <Tabs
@@ -66,6 +69,16 @@ export default function TabLayout() {
         options={{
           headerShown: true,
           title: "Profile",
+          headerRight: () => (
+            <Button className="bg-white" onPress={logout}>
+              <IconSymbol
+                size={28}
+                name="rectangle.portrait.and.arrow.right"
+                color={Colors[colorScheme ?? "light"].text}
+                style={{ marginRight: 10 }}
+              />
+            </Button>
+          ),
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.fill" color={color} />
           ),

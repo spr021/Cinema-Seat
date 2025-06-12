@@ -74,7 +74,7 @@ export function useProfileLogic() {
   }
 
   const handleDeleteAccount = () => {
-    if (!token || !user?.id) return
+    if (!token || !user?._id) return
     Alert.alert(
       "Confirm Account Deletion",
       "Are you sure you want to delete your account? This action cannot be undone.",
@@ -86,7 +86,7 @@ export function useProfileLogic() {
         {
           text: "Delete",
           onPress: async () => {
-            await deleteUserAccount(token, user.id)
+            await deleteUserAccount(token, user._id)
             console.log("DELETE ACCOUNT successful")
             logout()
           },

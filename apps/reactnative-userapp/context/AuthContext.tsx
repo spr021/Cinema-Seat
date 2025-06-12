@@ -2,19 +2,14 @@ import React, { createContext, useState, useContext, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 import { verifyToken } from "../services/userService"
-
-interface User {
-  id: string
-  email: string
-  username: string
-  // Add other user properties as needed
-}
+import { User } from "@/types/user" // Import the shared User interface
 
 interface AuthContextProps {
   token: string | null
   setToken: (token: string | null) => void
   user: User | null
   setUser: (user: User | null) => void
+  updateUser: (userData: Partial<User>) => void // Add updateUser
   logout: () => void
 }
 
@@ -23,6 +18,7 @@ const AuthContext = createContext<AuthContextProps>({
   setToken: () => {},
   user: null,
   setUser: () => {},
+  updateUser: () => {}, // Initialize updateUser
   logout: () => {},
 })
 
@@ -45,7 +41,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setToken(storedToken)
         }
         if (storedUser) {
-          setUser(JSON.parse(storedUser))
+          const parsedUser = JSON.parse(storedUser)
+          setUser(parsedUser)
+          console.log("AuthContext: User loaded from AsyncStorage:", parsedUser)
         }
 
         if (storedToken) {
@@ -89,6 +87,17 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     saveAuthData()
   }, [token, user])
 
+  const updateUser = (userData: Partial<User>) => {
+    setUser((prevUser) => {
+      if (prevUser) {
+        const updatedUser = { ...prevUser, ...userData }
+        AsyncStorage.setItem("user", JSON.stringify(updatedUser)) // Update AsyncStorage
+        return updatedUser
+      }
+      return prevUser
+    })
+  }
+
   const logout = async () => {
     setToken(null)
     setUser(null)
@@ -103,7 +112,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ token, setToken, user, setUser, logout }}>
+    <AuthContext.Provider
+      value={{ token, setToken, user, setUser, updateUser, logout }}
+    >
       {children}
     </AuthContext.Provider>
   )

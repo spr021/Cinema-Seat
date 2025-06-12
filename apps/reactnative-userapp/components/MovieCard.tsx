@@ -13,8 +13,7 @@ interface MovieCardProps {
 const { width: screenWidth } = Dimensions.get("window")
 
 function MovieCard({ item, size }: MovieCardProps) {
-  const { addMovieToWishlist, removeMovieFromWishlist, isMovieInWishlist } =
-    useWishlist()
+  const { toggleLike, isMovieInWishlist } = useWishlist()
 
   const itemWidth =
     size === "small"
@@ -26,11 +25,7 @@ function MovieCard({ item, size }: MovieCardProps) {
   const isInWishlist = isMovieInWishlist(item._id)
 
   const handleWishlistToggle = () => {
-    if (isInWishlist) {
-      removeMovieFromWishlist(item._id)
-    } else {
-      addMovieToWishlist(item)
-    }
+    toggleLike(item)
   }
 
   const renderStars = (rating: number) => {

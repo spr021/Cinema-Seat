@@ -2,8 +2,8 @@ import { NextFunction, Request, Response } from "express"
 import { promisify } from "util"
 import JWT, { SignOptions } from "jsonwebtoken"
 import User, { IUser } from "../models/user.model"
-import bcrypt from "bcryptjs"
 import { Request as ExpressRequest } from "express"
+import mongoose from "mongoose"
 
 interface AuthenticatedRequest extends ExpressRequest {
   user?: {
@@ -167,7 +167,13 @@ const getUserProfile = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(401).json({ message: "User not authenticated" })
   }
 
-  const user = await User.findById(req.user.id).select("-password")
+  const user = await User.findById(req.user.id)
+    .select("-password")
+    // populate likes with movie details
+    .populate({
+      path: "likes",
+      select: "-shows",
+    })
 
   if (!user) {
     return res.status(404).json({ message: "User not found" })
@@ -248,6 +254,53 @@ const verifyPassword = async (req: AuthenticatedRequest, res: Response) => {
     .json({ success: true, message: "Current password verified successfully" })
 }
 
+// @desc    Toggle movie like
+// @route   POST /api/v1/auth/toggle-movie-like
+// @access  Private
+const toggleMovieLike = async (req: AuthenticatedRequest, res: Response) => {
+  const { movieId } = req.body
+
+  if (!req.user?.id) {
+    return res.status(401).json({ message: "User not authenticated" })
+  }
+
+  if (!movieId) {
+    return res.status(400).json({ message: "Movie ID is required" })
+  }
+
+  const user = await User.findById(req.user.id)
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" })
+  }
+
+  const movieObjectId = new mongoose.Types.ObjectId(movieId)
+
+  const isLiked = user.likes.includes(movieObjectId)
+
+  if (isLiked) {
+    user.likes = user.likes.filter((id) => !id.equals(movieObjectId))
+  } else {
+    user.likes.push(movieObjectId)
+  }
+
+  await user.save()
+
+  // Populate the likes array with full movie objects
+  await user.populate({
+    path: "likes",
+    select: "-shows",
+  })
+
+  res.status(200).json({
+    success: true,
+    data: user.likes,
+    message: isLiked
+      ? "Movie unliked successfully"
+      : "Movie liked successfully",
+  })
+}
+
 export {
   register,
   login,
@@ -259,4 +312,5 @@ export {
   getUserProfile,
   updateUserProfile,
   verifyPassword,
+  toggleMovieLike,
 }

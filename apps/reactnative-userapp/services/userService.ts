@@ -1,4 +1,5 @@
 import { User } from "@/types/user"
+import { Movie } from "@/types/movie" // Import Movie type
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL
 
@@ -42,6 +43,49 @@ export async function deleteUserAccount(
   }
 
   return response.json()
+}
+
+export async function toggleMovieLike(
+  token: string,
+  movieId: string
+): Promise<Movie[]> {
+  // Change return type to Movie[]
+  const response = await fetch(`${API_BASE_URL}/auth/toggle-movie-like`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ movieId }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Failed to toggle movie like")
+  }
+
+  const responseData = await response.json()
+  return responseData.data // Assuming the backend returns the updated likes array (now Movie[])
+}
+
+export async function fetchUserProfile(
+  token: string
+): Promise<{ success: boolean; data: User }> {
+  const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Failed to fetch user profile")
+  }
+
+  const responseData = await response.json()
+  return responseData
 }
 
 export async function verifyToken(token: string): Promise<boolean> {

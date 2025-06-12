@@ -23,8 +23,7 @@ import { useMovieDetail } from "@/hooks/useMovieDetail"
 function MovieDetailScreen() {
   const { id } = useLocalSearchParams()
   const router = useRouter()
-  const { addMovieToWishlist, removeMovieFromWishlist, isMovieInWishlist } =
-    useWishlist()
+  const { toggleLike, isMovieInWishlist } = useWishlist()
   const { movie, isLoading, error } = useMovieDetail(id)
 
   if (isLoading) {
@@ -56,11 +55,7 @@ function MovieDetailScreen() {
 
   const handleWishlistToggle = () => {
     if (!movie) return
-    if (isInWishlist) {
-      removeMovieFromWishlist(movie._id)
-    } else {
-      addMovieToWishlist(movie)
-    }
+    toggleLike(movie)
   }
 
   const handleBuyTicket = () => {

@@ -3,13 +3,13 @@ import {
   register,
   login,
   getUser,
-  protectedRoute,
   updateUserById,
   deleteUserById,
   getSession,
   getUserProfile,
   updateUserProfile,
   verifyPassword,
+  toggleMovieLike,
 } from "../controllers/auth.controller"
 import asyncMiddleware from "../middlewares/async"
 import {
@@ -28,6 +28,12 @@ router.post(
   "/verify-password",
   authenticateToken,
   asyncMiddleware(verifyPassword)
+)
+
+router.post(
+  "/toggle-movie-like",
+  authenticateToken,
+  asyncMiddleware(toggleMovieLike)
 )
 
 router.get("/:id", authenticateToken, asyncMiddleware(getUser))

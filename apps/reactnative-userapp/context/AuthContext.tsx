@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
+import { verifyToken } from "../services/userService"
 
 interface User {
   id: string
@@ -45,6 +46,19 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         if (storedUser) {
           setUser(JSON.parse(storedUser))
+        }
+
+        if (storedToken) {
+          console.log("Verifying stored token...")
+
+          const isValid = await verifyToken(storedToken)
+          if (!isValid) {
+            console.log("Stored token invalid, logging out...")
+            await AsyncStorage.removeItem("token")
+            await AsyncStorage.removeItem("user")
+            setToken(null)
+            setUser(null)
+          }
         }
       } catch (error) {
         console.error("Failed to load auth data from storage", error)

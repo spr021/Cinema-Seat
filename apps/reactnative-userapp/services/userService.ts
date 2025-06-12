@@ -44,6 +44,35 @@ export async function deleteUserAccount(
   return response.json()
 }
 
+export async function verifyToken(token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (response.ok) {
+      return true // Token is valid
+    } else if (response.status === 401) {
+      return false // Token is invalid (e.g., expired, unauthorized)
+    } else {
+      const errorData = await response.json()
+      console.error(
+        "Token verification failed with status:",
+        response.status,
+        errorData
+      )
+      return false // Other errors, treat as invalid for logout purposes
+    }
+  } catch (error) {
+    console.error("Network error during token verification:", error)
+    return false // Network error, treat as invalid for logout purposes
+  }
+}
+
 export async function verifyCurrentPassword(
   token: string,
   currentPassword: string

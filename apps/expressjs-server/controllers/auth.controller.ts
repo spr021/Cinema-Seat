@@ -36,6 +36,7 @@ const register = async (req: Request, res: Response) => {
     avatar,
     password,
     passwordConfirm,
+    roles: ["user"], // Default role
   })
 
   const token = signToken(user.id, user.email)

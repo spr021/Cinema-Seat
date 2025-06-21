@@ -13,15 +13,16 @@ interface AuthenticatedRequest extends ExpressRequest {
   }
 }
 
-const signToken = (id: string, email: string) => {
+const signToken = (id: string, email: string, roles: string[]) => {
   const options: SignOptions = {
-    expiresIn: 60 * 60 * 24, // 1 day
+    expiresIn: 60 * 60 * 24 * 10, // 10 day
     algorithm: "HS256", // Specify the algorithm
   }
   return JWT.sign(
     {
       id,
       email,
+      roles,
     },
     process.env.JWT_SECRET_KEY!,
     options
@@ -39,7 +40,7 @@ const register = async (req: Request, res: Response) => {
     roles: ["user"], // Default role
   })
 
-  const token = signToken(user.id, user.email)
+  const token = signToken(user.id, user.email, user.roles)
   res.status(200).json({
     data: user,
     token,
@@ -52,10 +53,10 @@ const login = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Enter email and password" })
   }
   const user: IUser = await User.findOne({ email }).select("+password")
-  if (!user || !user.comparePassword(password, user.password)) {
+  if (!user || !(await user.comparePassword(password, user.password))) {
     return res.status(401).json({ message: "Invalid credentials" })
   }
-  const token = signToken(user.id, user.email)
+  const token = signToken(user.id, user.email, user.roles)
   res.status(200).json({
     user: {
       id: user.id,
@@ -84,17 +85,7 @@ const protectedRoute = async (
       return next()
     }
     JWT.verify(token, process.env.JWT_SECRET_KEY!, {}, (error, callback) => {})
-    const decoded = await promisify(JWT.verify)(
-      token
-      // process.env.JWT_SECRET_KEY!
-    )
-
-    console.log(decoded)
-
-    // const freshUser = await User.findById(decoded)
-    // if(!freshUser) {
-    //   return next()
-    // }
+    const decoded = await promisify(JWT.verify)(token)
   } catch (error) {
     if (error instanceof Error) {
       res.status(500).json({ message: error.message })

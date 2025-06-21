@@ -24,7 +24,7 @@ app.use("/show", show)
 app.use("/seat", seat)
 app.use("/hall", hall)
 app.use("/reservation", reservation)
-app.use("/ticket", ticket) // Register the new ticket router
+app.use("/ticket", ticket)
 app.use("/auth", auth)
 
 app.get("/", (req: Request, res: Response) => {

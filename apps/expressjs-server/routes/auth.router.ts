@@ -36,14 +36,14 @@ router.post(
   asyncMiddleware(toggleMovieLike)
 )
 
-router.get("/:id", authenticateToken, asyncMiddleware(getUser))
-router.put("/:id", authenticateToken, asyncMiddleware(updateUserById))
-router.delete("/:id", authenticateToken, asyncMiddleware(deleteUserById))
 router.get(
   "/session",
   authenticateToken,
   authorizeRoles(["admin"]),
   asyncMiddleware(getSession)
 )
+router.get("/:id", authenticateToken, asyncMiddleware(getUser))
+router.put("/:id", authenticateToken, asyncMiddleware(updateUserById))
+router.delete("/:id", authenticateToken, asyncMiddleware(deleteUserById))
 
 export default router

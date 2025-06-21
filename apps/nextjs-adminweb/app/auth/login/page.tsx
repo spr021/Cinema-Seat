@@ -18,11 +18,55 @@ export default function Login() {
     setError("")
 
     try {
-      // TODO: Implement actual login logic here
-      console.log("Login attempt:", formData)
-      router.push("/dashboard")
-    } catch (err) {
-      setError("Invalid email or password")
+      const BASE_URL = "http://localhost:4000/auth"
+
+      const response = await fetch(`${BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed")
+      }
+
+      const token = data.token
+      if (formData.rememberMe) {
+        localStorage.setItem("token", token)
+      } else {
+        sessionStorage.setItem("token", token)
+      }
+
+      // Check user role
+      const sessionResponse = await fetch(`${BASE_URL}/session`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const sessionData = await sessionResponse.json()
+
+      if (!sessionResponse.ok) {
+        throw new Error(sessionData.message || "Failed to get session data")
+      }
+      console.log(sessionData.user.roles.includes("admin"))
+
+      if (sessionData.user && sessionData.user.roles.includes("admin")) {
+        router.push("/dashboard")
+      } else {
+        throw new Error("Access denied: Only admin users can log in here.")
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred")
     }
   }
 

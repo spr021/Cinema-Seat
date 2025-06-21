@@ -1,28 +1,28 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function Login() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     rememberMe: false,
   })
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
 
     try {
       // TODO: Implement actual login logic here
-      console.log('Login attempt:', formData)
-      router.push('/dashboard')
+      console.log("Login attempt:", formData)
+      router.push("/dashboard")
     } catch (err) {
-      setError('Invalid email or password')
+      setError("Invalid email or password")
     }
   }
 
@@ -36,7 +36,10 @@ export default function Login() {
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
             Email address
           </label>
           <div className="mt-2">
@@ -47,14 +50,19 @@ export default function Login() {
               autoComplete="email"
               required
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
             Password
           </label>
           <div className="mt-2">
@@ -65,7 +73,9 @@ export default function Login() {
               autoComplete="current-password"
               required
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
@@ -78,10 +88,15 @@ export default function Login() {
               name="remember-me"
               type="checkbox"
               checked={formData.rememberMe}
-              onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, rememberMe: e.target.checked })
+              }
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+            <label
+              htmlFor="remember-me"
+              className="ml-2 block text-sm text-gray-900"
+            >
               Remember me
             </label>
           </div>
@@ -105,26 +120,6 @@ export default function Login() {
           </button>
         </div>
       </form>
-
-      <div className="mt-6">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">Or</span>
-          </div>
-        </div>
-
-        <div className="mt-6 text-center text-sm">
-          <Link
-            href="/auth/signup"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            Create new account
-          </Link>
-        </div>
-      </div>
     </>
   )
-} 
+}

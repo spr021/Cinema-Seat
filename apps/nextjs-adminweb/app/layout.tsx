@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import "./globals.css"
 import { Inter } from "next/font/google"
+import { LoadingSpinner } from "./components/LoadingSpinner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -82,7 +83,7 @@ export default function RootLayout({
       <body className={`${inter.className} h-full`}>
         {isLoading && !publicPaths.includes(pathname) ? (
           <div className="flex h-full items-center justify-center">
-            <p>Loading...</p>
+            <LoadingSpinner size="large" color="border-indigo-600" />
           </div>
         ) : (
           children

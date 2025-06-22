@@ -10,6 +10,8 @@ import {
   updateUserProfile,
   verifyPassword,
   toggleMovieLike,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/auth.controller"
 import asyncMiddleware from "../middlewares/async"
 import {
@@ -21,6 +23,8 @@ const router: Router = express.Router()
 
 router.post("/register", asyncMiddleware(register))
 router.post("/login", asyncMiddleware(login))
+router.post("/forgot-password", asyncMiddleware(forgotPassword))
+router.patch("/reset-password/:token", asyncMiddleware(resetPassword))
 
 router.get("/profile", authenticateToken, asyncMiddleware(getUserProfile))
 router.put("/profile", authenticateToken, asyncMiddleware(updateUserProfile))

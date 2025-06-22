@@ -1,24 +1,43 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState } from "react"
+import Link from "next/link"
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
+  const [email, setEmail] = useState("")
+  const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
     setSuccess(false)
 
     try {
-      // TODO: Implement actual password reset logic here
-      console.log('Password reset requested for:', email)
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send reset email")
+      }
+
+      if (response.ok) {
+        prompt(data.data.title, data.data.resetURL)
+      }
+
       setSuccess(true)
-    } catch (err) {
-      setError('Failed to send reset email')
+    } catch (err: any) {
+      setError(err.message || "Failed to send reset email")
     }
   }
 
@@ -27,24 +46,28 @@ export default function ForgotPassword() {
       <div className="mb-6 text-center">
         <h2 className="text-xl font-bold">Forgot your password?</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Enter your email address and we&apos;ll send you a link to reset your password.
+          Enter your email address and we&apos;ll send you a link to reset your
+          password.
         </p>
       </div>
 
       {success ? (
-        <div className="rounded-md bg-green-50 p-4">
-          <div className="text-sm text-green-700">
-            If an account exists with this email, you will receive a password reset link shortly.
+        <>
+          <div className="rounded-md bg-green-50 p-4">
+            <div className="text-sm text-green-700">
+              If an account exists with this email, you will receive a password
+              reset link shortly.
+            </div>
+            <div className="mt-4 text-center">
+              <Link
+                href="/auth/login"
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Return to login
+              </Link>
+            </div>
           </div>
-          <div className="mt-4 text-center">
-            <Link
-              href="/auth/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              Return to login
-            </Link>
-          </div>
-        </div>
+        </>
       ) : (
         <form className="space-y-6" onSubmit={handleSubmit}>
           {error && (
@@ -54,7 +77,10 @@ export default function ForgotPassword() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
               Email address
             </label>
             <div className="mt-2">
@@ -92,4 +118,4 @@ export default function ForgotPassword() {
       )}
     </>
   )
-} 
+}

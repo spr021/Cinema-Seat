@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import bcrypt from "bcryptjs"
 import validator from "validator"
+import crypto from "crypto"
 
 export interface IUser extends mongoose.Document {
   name: string
@@ -9,10 +10,13 @@ export interface IUser extends mongoose.Document {
   password: string
   passwordConfirm?: string // Optional property, not saved in DB
   roles: string[]
+  passwordResetToken?: string
+  passwordResetExpires?: Date
   comparePassword(
     candidatePassword: string,
     hashedPassword: string
   ): Promise<boolean>
+  createPasswordResetToken(): string
   likes: mongoose.Types.ObjectId[]
 }
 
@@ -55,6 +59,8 @@ const UserSchema = new mongoose.Schema(
       type: [String],
       default: ["user"],
     },
+    passwordResetToken: String,
+    passwordResetExpires: Date,
     likes: {
       type: [mongoose.Types.ObjectId],
       ref: "Movie",
@@ -77,6 +83,19 @@ UserSchema.methods.comparePassword = async function (
   hashedPassword: string
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, hashedPassword)
+}
+
+UserSchema.methods.createPasswordResetToken = function (): string {
+  const resetToken = crypto.randomBytes(32).toString("hex")
+
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex")
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000 // 10 minutes
+
+  return resetToken
 }
 
 const User = mongoose.model<IUser>("User", UserSchema)

@@ -4,6 +4,8 @@ import JWT, { SignOptions } from "jsonwebtoken"
 import User, { IUser } from "../models/user.model"
 import { Request as ExpressRequest } from "express"
 import mongoose from "mongoose"
+import sendEmail from "../utils/email"
+import crypto from "crypto"
 
 interface AuthenticatedRequest extends ExpressRequest {
   user?: {
@@ -43,6 +45,101 @@ const register = async (req: Request, res: Response) => {
   const token = signToken(user.id, user.email, user.roles)
   res.status(200).json({
     data: user,
+    token,
+  })
+}
+
+// @desc    Forgot password
+// @route   POST /api/v1/auth/forgot-password
+// @access  Public
+const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // 1) Get user based on POSTed email
+  const user = await User.findOne({ email: req.body.email })
+  if (!user) {
+    return res
+      .status(404)
+      .json({ message: "There is no user with that email address." })
+  }
+
+  // 2) Generate the random reset token
+  const resetToken = user.createPasswordResetToken()
+  await user.save({ validateBeforeSave: false })
+
+  // 3) Send it to user's email
+  const resetURL = `${req.get("origin")}/auth/reset-password?token=${resetToken}`
+
+  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`
+
+  try {
+    // Use when setup SMTP service
+    // await sendEmail({
+    //   email: user.email,
+    //   subject: "Your password reset token (valid for 10 min)",
+    //   message,
+    // })
+
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to email!",
+      // For testing purposes, we return the reset URL
+      data: {
+        email: user.email,
+        subject: "Your password reset token (valid for 10 min)",
+        title: "Use this link to reset your password",
+        resetURL,
+        message,
+      },
+    })
+  } catch (err) {
+    user.passwordResetToken = undefined
+    user.passwordResetExpires = undefined
+    await user.save({ validateBeforeSave: false })
+
+    return res.status(500).json({
+      message: "There was an error sending the email. Try again later!",
+    })
+  }
+}
+
+// @desc    Reset password
+// @route   PATCH /api/v1/auth/reset-password/:token
+// @access  Public
+const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex")
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  })
+
+  // 2) If token has not expired, and there is user, set the new password
+  if (!user) {
+    return res.status(400).json({ message: "Token is invalid or has expired" })
+  }
+
+  user.password = req.body.password
+  user.passwordConfirm = req.body.passwordConfirm
+  user.passwordResetToken = undefined
+  user.passwordResetExpires = undefined
+  await user.save()
+
+  // 3) Log the user in, send JWT
+  const token = signToken(user.id, user.email, user.roles)
+
+  res.status(200).json({
+    status: "success",
     token,
   })
 }
@@ -305,4 +402,6 @@ export {
   updateUserProfile,
   verifyPassword,
   toggleMovieLike,
+  forgotPassword,
+  resetPassword,
 }

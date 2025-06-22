@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { Fragment, useState } from 'react'
-import { Dialog, Transition } from '@headlessui/react'
+import { Fragment, useState } from "react"
+import { Dialog, Transition } from "@headlessui/react"
 import {
   Bars3Icon,
   HomeIcon,
@@ -11,29 +11,37 @@ import {
   ChartBarIcon,
   CalendarIcon,
   VideoCameraIcon,
-} from '@heroicons/react/24/outline'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import Header from './Header'
+  // ArrowLeftOnRectangleIcon, // Import the logout icon
+  ArrowLeftEndOnRectangleIcon,
+} from "@heroicons/react/24/outline"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import Header from "./Header"
+import { useAuth } from "../hooks/useAuth" // Import the useAuth hook
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Movies', href: '/dashboard/movies', icon: VideoCameraIcon },
-  { name: 'Shows', href: '/dashboard/shows', icon: CalendarIcon },
-  { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
-  { name: 'Products', href: '/dashboard/products', icon: ShoppingBagIcon },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: ChartBarIcon },
-  { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
+  { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+  { name: "Movies", href: "/dashboard/movies", icon: VideoCameraIcon },
+  { name: "Shows", href: "/dashboard/shows", icon: CalendarIcon },
+  { name: "Users", href: "/dashboard/users", icon: UsersIcon },
+  { name: "Products", href: "/dashboard/products", icon: ShoppingBagIcon },
+  { name: "Analytics", href: "/dashboard/analytics", icon: ChartBarIcon },
+  { name: "Settings", href: "/dashboard/settings", icon: CogIcon },
 ]
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const { logout } = useAuth() // Use the useAuth hook
 
   return (
     <div className="min-h-full">
       <Transition show={sidebarOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50 lg:hidden" onClose={() => setSidebarOpen(false)}>
+        <Dialog
+          as="div"
+          className="relative z-50 lg:hidden"
+          onClose={() => setSidebarOpen(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="transition-opacity ease-linear duration-300"
@@ -59,7 +67,9 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1">
                 <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2">
                   <div className="flex h-16 shrink-0 items-center">
-                    <span className="text-xl font-bold text-indigo-600">Admin Panel</span>
+                    <span className="text-xl font-bold text-indigo-600">
+                      Admin Panel
+                    </span>
                   </div>
                   <nav className="flex flex-1 flex-col">
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -71,15 +81,19 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                                 href={item.href}
                                 className={`
                                   group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold
-                                  ${pathname === item.href
-                                    ? 'bg-gray-50 text-indigo-600'
-                                    : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
+                                  ${
+                                    pathname === item.href
+                                      ? "bg-gray-50 text-indigo-600"
+                                      : "text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
                                   }
                                 `}
                               >
                                 <item.icon
-                                  className={`h-6 w-6 shrink-0 ${pathname === item.href ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'
-                                    }`}
+                                  className={`h-6 w-6 shrink-0 ${
+                                    pathname === item.href
+                                      ? "text-indigo-600"
+                                      : "text-gray-400 group-hover:text-indigo-600"
+                                  }`}
                                   aria-hidden="true"
                                 />
                                 {item.name}
@@ -87,6 +101,18 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                             </li>
                           ))}
                         </ul>
+                      </li>
+                      <li className="mt-auto">
+                        <button
+                          onClick={logout}
+                          className="group mb-3 -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 w-full"
+                        >
+                          <ArrowLeftEndOnRectangleIcon
+                            className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
+                            aria-hidden="true"
+                          />
+                          Logout
+                        </button>
                       </li>
                     </ul>
                   </nav>
@@ -101,7 +127,9 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
           <div className="flex h-16 shrink-0 items-center">
-            <span className="text-xl font-bold text-indigo-600">Admin Panel</span>
+            <span className="text-xl font-bold text-indigo-600">
+              Admin Panel
+            </span>
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -113,15 +141,19 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                         href={item.href}
                         className={`
                           group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold
-                          ${pathname === item.href
-                            ? 'bg-gray-50 text-indigo-600'
-                            : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
+                          ${
+                            pathname === item.href
+                              ? "bg-gray-50 text-indigo-600"
+                              : "text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
                           }
                         `}
                       >
                         <item.icon
-                          className={`h-6 w-6 shrink-0 ${pathname === item.href ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'
-                            }`}
+                          className={`h-6 w-6 shrink-0 ${
+                            pathname === item.href
+                              ? "text-indigo-600"
+                              : "text-gray-400 group-hover:text-indigo-600"
+                          }`}
                           aria-hidden="true"
                         />
                         {item.name}
@@ -129,6 +161,18 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     </li>
                   ))}
                 </ul>
+              </li>
+              <li className="mt-auto">
+                <button
+                  onClick={logout}
+                  className="group mb-3 -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 w-full"
+                >
+                  <ArrowLeftEndOnRectangleIcon
+                    className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
+                    aria-hidden="true"
+                  />
+                  Logout
+                </button>
               </li>
             </ul>
           </nav>
@@ -154,4 +198,4 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   )
-} 
+}

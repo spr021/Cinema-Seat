@@ -17,6 +17,8 @@ interface Movie {
   genre: string
   duration: number
   year: string
+  rating?: number
+  summary?: string
   shows: string[]
   createdAt?: string
   updatedAt?: string
@@ -63,6 +65,8 @@ export default function Movies() {
     genre: "",
     duration: 0,
     year: "",
+    rating: 0,
+    summary: "",
   })
 
   // API URL
@@ -113,6 +117,8 @@ export default function Movies() {
       genre: "",
       duration: 0,
       year: "",
+      rating: 0,
+      summary: "",
     })
     setIsEditing(false)
     setIsModalOpen(true)
@@ -126,6 +132,8 @@ export default function Movies() {
       genre: movie.genre,
       duration: movie.duration,
       year: movie.year,
+      rating: movie.rating || 0,
+      summary: movie.summary || "",
     })
     setCurrentMovie(movie)
     setIsEditing(true)
@@ -140,12 +148,15 @@ export default function Movies() {
 
   // Handle form input changes
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target
     setFormData({
       ...formData,
-      [name]: name === "duration" ? parseInt(value) || 0 : value,
+      [name]:
+        name === "duration" || name === "rating" ? parseInt(value) || 0 : value,
     })
   }
 
@@ -154,8 +165,8 @@ export default function Movies() {
     try {
       if (isEditing && currentMovie) {
         // Update existing movie
-        console.log("Updating movie:", currentMovie._id);
-        
+        console.log("Updating movie:", currentMovie._id)
+
         const response = await fetch(`${API_URL}/movie/${currentMovie._id}`, {
           method: "PUT",
           headers: {
@@ -554,6 +565,47 @@ export default function Movies() {
                                 pattern="[0-9]{4}"
                                 required
                               />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="rating"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Rating (0-10)
+                            </label>
+                            <div className="mt-2">
+                              <input
+                                type="number"
+                                name="rating"
+                                id="rating"
+                                value={formData.rating}
+                                onChange={handleInputChange}
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                min="0"
+                                max="10"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="summary"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Summary
+                            </label>
+                            <div className="mt-2">
+                              <textarea
+                                name="summary"
+                                id="summary"
+                                value={formData.summary}
+                                onChange={handleInputChange}
+                                rows={3}
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                placeholder="Brief summary of the movie"
+                              ></textarea>
                             </div>
                           </div>
                         </form>

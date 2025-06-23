@@ -12,6 +12,7 @@ import {
   toggleMovieLike,
   forgotPassword,
   resetPassword,
+  getUsers,
 } from "../controllers/auth.controller"
 import asyncMiddleware from "../middlewares/async"
 import {
@@ -45,6 +46,12 @@ router.get(
   authenticateToken,
   authorizeRoles(["admin"]),
   asyncMiddleware(getSession)
+)
+router.get(
+  "/users",
+  authenticateToken,
+  authorizeRoles(["admin"]),
+  asyncMiddleware(getUsers)
 )
 router.get("/:id", authenticateToken, asyncMiddleware(getUser))
 router.put("/:id", authenticateToken, asyncMiddleware(updateUserById))

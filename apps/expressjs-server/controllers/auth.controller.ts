@@ -390,6 +390,25 @@ const toggleMovieLike = async (req: AuthenticatedRequest, res: Response) => {
   })
 }
 
+// @desc    Get all users
+// @route   GET /api/v1/auth/users
+// @access  Private/Admin
+const getUsers = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const users = await User.find().select("-password") // Exclude password field
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(500).json({ message: error.message })
+    }
+    res.status(500).json({ message: "An unknown error occurred" })
+  }
+}
+
 export {
   register,
   login,
@@ -404,4 +423,5 @@ export {
   toggleMovieLike,
   forgotPassword,
   resetPassword,
+  getUsers,
 }

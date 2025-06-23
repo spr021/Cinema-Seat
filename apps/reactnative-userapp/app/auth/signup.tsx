@@ -12,7 +12,7 @@ import { Button, ButtonText } from "@/components/ui/button"
 import { useAuth } from "@/context/AuthContext"
 
 export default function SignUpScreen() {
-  const [username, setUsername] = useState("")
+  const [name, setname] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -20,7 +20,7 @@ export default function SignUpScreen() {
   const { setToken, setUser } = useAuth()
 
   const handleSignUp = async () => {
-    if (!username || !email || !password) {
+    if (!name || !email || !password) {
       Alert.alert("Error", "Please fill in all fields.")
       return
     }
@@ -34,7 +34,7 @@ export default function SignUpScreen() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify({ name, email, password }),
         }
       )
 
@@ -65,9 +65,9 @@ export default function SignUpScreen() {
 
       <TextInput
         className="w-full p-4 mb-4 border border-gray-300 rounded-lg text-lg"
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
+        placeholder="name"
+        value={name}
+        onChangeText={setname}
         autoCapitalize="none"
       />
       <TextInput

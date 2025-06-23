@@ -13,6 +13,7 @@ import {
   forgotPassword,
   resetPassword,
   getUsers,
+  updateUserRole,
 } from "../controllers/auth.controller"
 import asyncMiddleware from "../middlewares/async"
 import {
@@ -52,6 +53,12 @@ router.get(
   authenticateToken,
   authorizeRoles(["admin"]),
   asyncMiddleware(getUsers)
+)
+router.put(
+  "/users/:id/role",
+  authenticateToken,
+  authorizeRoles(["admin"]),
+  asyncMiddleware(updateUserRole)
 )
 router.get("/:id", authenticateToken, asyncMiddleware(getUser))
 router.put("/:id", authenticateToken, asyncMiddleware(updateUserById))

@@ -409,6 +409,50 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   }
 }
 
+// @desc    Update user role
+// @route   PUT /api/v1/auth/users/:id/role
+// @access  Private/Admin
+const updateUserRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params
+  const { roles } = req.body // Expect roles to be an array of strings
+
+  if (!roles || !Array.isArray(roles)) {
+    return res
+      .status(400)
+      .json({ message: "Roles must be provided as an array." })
+  }
+
+  try {
+    const user = await User.findById(id)
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." })
+    }
+
+    user.roles = roles
+    await user.save({ validateBeforeSave: false }) // Bypass validation for password fields
+
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        roles: user.roles,
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(500).json({ message: error.message })
+    }
+    res.status(500).json({ message: "An unknown error occurred" })
+  }
+}
+
 export {
   register,
   login,
@@ -424,4 +468,5 @@ export {
   forgotPassword,
   resetPassword,
   getUsers,
+  updateUserRole,
 }

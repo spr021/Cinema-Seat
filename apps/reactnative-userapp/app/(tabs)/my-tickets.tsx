@@ -75,16 +75,16 @@ function TicketItem({ ticket }: { ticket: Ticket }) {
       {showQR && (
         <View className="p-4 items-center">
           <View className="items-center p-4 border border-gray-300 rounded-lg bg-gray-50">
-            {/* Replace with your actual API endpoint */}
+            {/* Staff scans this ID at the check-in page of the admin panel */}
             <QRCode
-              value={`YOUR_API_ENDPOINT/tickets/validate/${ticket.reservation_id}`}
+              value={ticket._id}
               size={180}
               color="black"
               backgroundColor="white"
             />
             <Text className="mt-4 text-center text-gray-700 text-sm">
               Booking Code:{" "}
-              <Text className="font-semibold">{ticket.reservation_id._id}</Text>
+              <Text className="font-semibold">{ticket._id}</Text>
             </Text>
           </View>
         </View>

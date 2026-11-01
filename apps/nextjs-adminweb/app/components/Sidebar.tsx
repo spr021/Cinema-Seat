@@ -8,6 +8,7 @@ import {
   UsersIcon,
   CalendarIcon,
   VideoCameraIcon,
+  TicketIcon,
   ArrowLeftEndOnRectangleIcon,
 } from "@heroicons/react/24/outline"
 import Link from "next/link"
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Movies", href: "/dashboard/movies", icon: VideoCameraIcon },
   { name: "Shows", href: "/dashboard/shows", icon: CalendarIcon },
   { name: "Users", href: "/dashboard/users", icon: UsersIcon },
+  { name: "Check-in", href: "/dashboard/checkin", icon: TicketIcon },
 ]
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {

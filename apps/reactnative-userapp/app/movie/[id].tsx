@@ -15,6 +15,8 @@ import {
   ClockIcon,
   FilmIcon,
   HeartIcon,
+  UserIcon,
+  UsersIcon,
 } from "lucide-react-native"
 import { IconSymbol } from "@/components/ui/IconSymbol"
 import { useWishlist } from "@/hooks/useWishlist"
@@ -107,6 +109,22 @@ function MovieDetailScreen() {
               Genre: {movie.genre}
             </Text>
           </View>
+          {movie.director ? (
+            <View className="flex-row items-center mb-2">
+              <UserIcon size={20} color="#6b7280" />
+              <Text className="ml-2 text-base text-gray-700">
+                Director: {movie.director}
+              </Text>
+            </View>
+          ) : null}
+          {movie.actors && movie.actors.length > 0 ? (
+            <View className="flex-row items-center mb-2 flex-wrap">
+              <UsersIcon size={20} color="#6b7280" />
+              <Text className="ml-2 text-base text-gray-700">
+                Cast: {movie.actors.join(", ")}
+              </Text>
+            </View>
+          ) : null}
 
           <Text className="text-base leading-6 mb-4">{movie.summary}</Text>
         </View>

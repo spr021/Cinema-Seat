@@ -22,6 +22,11 @@ const ReservationSchema = new Schema(
       default: false,
       required: true,
     },
+    // Stripe checkout session for this reservation, when paid via Stripe
+    checkout_session_id: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -11,7 +11,10 @@ import { getFormattedDate, getFormattedTime } from "@/utils/date"
 import {
   createReservation,
   markReservationAsPaid,
-} from "@/services/reservationService" // Import createReservation and markReservationAsPaid
+  createCheckoutSession,
+  verifyReservationPayment,
+} from "@/services/reservationService" // Import payment + reservation services
+import * as WebBrowser from "expo-web-browser" // Stripe checkout browser
 import {
   holdSeats,
   releaseHeldSeats,
@@ -91,6 +94,71 @@ export default function SelectTicketScreen() {
       }
     }
   }, [token])
+
+  // Pay for a reservation: Stripe Checkout when configured, mock otherwise.
+  // openBrowserAsync resolves when the user closes the browser, then we ask
+  // the server to verify/finalize the payment.
+  const completePayment = async (reservationId: string) => {
+    if (!token) return
+    try {
+      const checkout = await createCheckoutSession(reservationId, token)
+
+      if (checkout.stripeEnabled && checkout.url) {
+        await WebBrowser.openBrowserAsync(checkout.url)
+        const verify = await verifyReservationPayment(reservationId, token)
+        if (verify.is_paid) {
+          Alert.alert("Payment successful 🎉", "Your tickets are ready.", [
+            { text: "OK", onPress: () => router.push("/(tabs)/my-tickets") },
+          ])
+        } else {
+          Alert.alert(
+            "Payment not completed",
+            "Your seats are reserved — you can pay from My Tickets.",
+            [{ text: "OK", onPress: () => router.push("/(tabs)/my-tickets") }]
+          )
+        }
+        return
+      }
+
+      // Stripe not configured on the server: mock payment flow
+      Alert.alert(
+        "Payment Confirmation",
+        "Do you want to mark this reservation as paid?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => router.push("/(tabs)/my-tickets"),
+          },
+          {
+            text: "Confirm Payment",
+            onPress: async () => {
+              const paymentResult = await markReservationAsPaid(
+                reservationId,
+                token
+              )
+              if (paymentResult.success) {
+                Alert.alert("Payment Successful", paymentResult.message)
+                router.push("/(tabs)/my-tickets")
+              } else {
+                Alert.alert(
+                  "Payment Failed",
+                  paymentResult.message ||
+                    "Could not mark reservation as paid."
+                )
+              }
+            },
+          },
+        ]
+      )
+    } catch (error: any) {
+      Alert.alert(
+        "Payment Error",
+        error.message || "Something went wrong starting the payment."
+      )
+      router.push("/(tabs)/my-tickets")
+    }
+  }
 
   const handleProceedToPay = async () => {
     if (!selectedDate || !selectedTime || selectedSeats.length === 0) {
@@ -174,48 +242,13 @@ export default function SelectTicketScreen() {
           [
             {
               text: "OK",
-              onPress: async () => {
-                // Simulate payment confirmation
-                Alert.alert(
-                  "Payment Confirmation",
-                  "Do you want to mark this reservation as paid?",
-                  [
-                    {
-                      text: "Cancel",
-                      style: "cancel",
-                      onPress: () => router.push("/(tabs)/my-tickets"),
-                    },
-                    {
-                      text: "Confirm Payment",
-                      onPress: async () => {
-                        if (result.reservation?._id) {
-                          const paymentResult = await markReservationAsPaid(
-                            result.reservation._id,
-                            token
-                          )
-                          if (paymentResult.success) {
-                            Alert.alert(
-                              "Payment Successful",
-                              paymentResult.message
-                            )
-                            router.push("/(tabs)/my-tickets")
-                          } else {
-                            Alert.alert(
-                              "Payment Failed",
-                              paymentResult.message ||
-                                "Could not mark reservation as paid."
-                            )
-                          }
-                        } else {
-                          Alert.alert(
-                            "Error",
-                            "Reservation ID not found for payment."
-                          )
-                        }
-                      },
-                    },
-                  ]
-                )
+              onPress: () => {
+                if (result.reservation?._id) {
+                  completePayment(result.reservation._id)
+                } else {
+                  Alert.alert("Error", "Reservation ID not found for payment.")
+                  router.push("/(tabs)/my-tickets")
+                }
               },
             },
           ]

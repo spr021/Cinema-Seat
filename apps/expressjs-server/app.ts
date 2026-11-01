@@ -6,6 +6,7 @@ import hall from "./routes/hall.router"
 import auth from "./routes/auth.router"
 import reservation from "./routes/reservation.router"
 import ticket from "./routes/ticket.router"
+import payment from "./routes/payment.router"
 import error from "./middlewares/error"
 import cors from "cors"
 
@@ -13,6 +14,9 @@ import cors from "cors"
 const app: Express = express()
 
 app.use(cors())
+// Stripe webhooks need the raw body for signature verification, so register
+// the raw parser for that path before the general JSON parser
+app.use("/payments/webhook", express.raw({ type: "application/json" }))
 app.use(json())
 app.use(urlencoded({ extended: false }))
 app.use("/movie", movie)
@@ -21,6 +25,7 @@ app.use("/seat", seat)
 app.use("/hall", hall)
 app.use("/reservation", reservation)
 app.use("/ticket", ticket)
+app.use("/payments", payment)
 app.use("/auth", auth)
 
 app.get("/", (req: Request, res: Response) => {

@@ -107,3 +107,47 @@ export async function markReservationAsPaid(
     }
   }
 }
+
+// Start a Stripe Checkout session for the reservation. When Stripe is not
+// configured on the server this returns { stripeEnabled: false } and the app
+// falls back to the mock payment flow.
+export async function createCheckoutSession(
+  reservationId: string,
+  token: string | null
+): Promise<{ stripeEnabled: boolean; url?: string }> {
+  const response = await fetch(
+    `${process.env.EXPO_PUBLIC_API_BASE_URL}/payments/create-checkout/${reservationId}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token ?? ""}`,
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to start checkout: ${response.status}`)
+  }
+  return response.json()
+}
+
+// Ask the server to finalize the payment for a reservation (used when the
+// user returns from the Stripe browser session)
+export async function verifyReservationPayment(
+  reservationId: string,
+  token: string | null
+): Promise<{ is_paid: boolean }> {
+  const response = await fetch(
+    `${process.env.EXPO_PUBLIC_API_BASE_URL}/payments/verify/${reservationId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token ?? ""}`,
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to verify payment: ${response.status}`)
+  }
+  return response.json()
+}

@@ -1,11 +1,10 @@
 import { Request, Response } from "express"
 import Reservation from "../models/reservation.model"
-import Ticket from "../models/ticket.model" // Import Ticket model
 import Show from "../models/show.model" // Import Show model
 import Seat from "../models/seat.model"
-import { layout1, layout2 } from "../constant/seat.layout"
 import { isBookableBy } from "../utils/seat"
 import { broadcastSeatsForSeatIds } from "../services/realtime"
+import { markReservationPaidAndCreateTicket } from "../services/payments"
 import { ObjectId } from "mongodb"
 
 interface AuthenticatedRequest extends Request {
@@ -162,45 +161,16 @@ const createReservation = async (
 
 const markReservationAsPaid = async (req: Request, res: Response) => {
   try {
-    const { reservationId } = req.params
-    const reservation = await Reservation.findById(reservationId).populate(
-      "show_id"
+    const result = await markReservationPaidAndCreateTicket(
+      req.params.reservationId
     )
-
-    if (!reservation) {
+    if (!result) {
       return res.status(404).json({ message: "Reservation not found." })
     }
-    if (reservation.is_paid) {
-      return res
-        .status(400)
-        .json({ message: "Reservation has already been paid." })
-    }
-
-    reservation.is_paid = true
-    await reservation.save()
-
-    // Price per seat comes from the hall layout (e.g. "20$")
-    const show = reservation.show_id as {
-      hall_id?: string
-    } | null
-    const hallLayout = show?.hall_id === "1" ? layout1 : layout2
-    const pricePerSeat = parseInt(hallLayout.price, 10) || 0
-    const totalPrice = reservation.seat_ids.length * pricePerSeat
-
-    // Create a new Ticket document
-    const ticket = await Ticket.create({
-      user_id: reservation.user_id,
-      show_id: reservation.show_id,
-      seat_ids: reservation.seat_ids,
-      reservation_id: reservation._id,
-      price: totalPrice,
-      purchase_date: new Date(),
-    })
-
     res.status(200).json({
       message: "Reservation marked as paid and ticket created.",
-      reservation,
-      ticket,
+      reservation: result.reservation,
+      ticket: result.ticket,
     })
   } catch (error) {
     if (error instanceof Error) {

@@ -166,7 +166,7 @@ describe("reservation flow", () => {
     expect(response.status).toBe(400)
   })
 
-  it("pays a reservation, creates a ticket with hall price, and blocks double pay", async () => {
+  it("pays a reservation, creates a ticket with hall price, and is idempotent on double pay", async () => {
     const listResponse = await fetch(`${baseUrl}/reservation/tickets`, {
       headers: { Authorization: `Bearer ${user.token}` },
     })
@@ -196,7 +196,10 @@ describe("reservation flow", () => {
         headers: { Authorization: `Bearer ${user.token}` },
       }
     )
-    expect(secondPay.status).toBe(400)
+    // Paying twice must not create a second ticket
+    expect(secondPay.status).toBe(200)
+    const secondBody = await secondPay.json()
+    expect(String(secondBody.ticket._id)).toBe(String(payBody.ticket._id))
   })
 
   it("lists tickets for the user and validation persists is_used", async () => {

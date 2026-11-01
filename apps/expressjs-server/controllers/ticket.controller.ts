@@ -1,5 +1,8 @@
 import { Request, Response } from "express"
 import Ticket from "../models/ticket.model"
+import User from "../models/user.model"
+import Movie from "../models/movie.model"
+import Show from "../models/show.model"
 import { ObjectId } from "mongodb"
 
 interface AuthenticatedRequest extends Request {
@@ -62,4 +65,38 @@ const validateTicket = async (req: Request, res: Response) => {
   }
 }
 
-export { getTicketsByUserId, validateTicket }
+// @desc    Aggregate numbers for the admin dashboard
+// @route   GET /api/v1/ticket/stats
+// @access  Private/Admin
+const getStats = async (req: Request, res: Response) => {
+  try {
+    const [totalUsers, totalMovies, totalShows, revenueAgg] =
+      await Promise.all([
+        User.countDocuments(),
+        Movie.countDocuments(),
+        Show.countDocuments(),
+        Ticket.aggregate([
+          {
+            $group: {
+              _id: null,
+              revenue: { $sum: "$price" },
+              ticketsSold: { $sum: 1 },
+            },
+          },
+        ]),
+      ])
+
+    res.status(200).json({
+      totalUsers,
+      totalMovies,
+      totalShows,
+      totalTickets: revenueAgg[0]?.ticketsSold ?? 0,
+      totalRevenue: revenueAgg[0]?.revenue ?? 0,
+    })
+  } catch (error) {
+    console.error("Error getting stats:", error)
+    res.status(500).json({ message: "An error occurred while getting stats." })
+  }
+}
+
+export { getTicketsByUserId, validateTicket, getStats }

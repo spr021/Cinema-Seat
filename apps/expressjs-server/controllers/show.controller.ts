@@ -8,8 +8,8 @@ const createShows = async (req: Request, res: Response) => {
   const { movieId } = req.params
   const { date, hall_id, movie_id } = req.body
 
-  if (!date) {
-    return res.status(400).json({ message: "input at least one date" })
+  if (!date || isNaN(new Date(date).getTime())) {
+    return res.status(400).json({ message: "A valid date is required" })
   }
 
   try {

@@ -38,12 +38,16 @@ export function useShowData(movieId: string | string[]): UseShowDataResult {
         setIsLoading(true)
         setError(null)
         const data = await fetchShowsByMovieId(movieIdString)
-        setShows(data)
+        // Drop shows with corrupted dates so one bad row can't crash the screen
+        const validShows = data.filter(
+          (show) => !isNaN(new Date(show.date).getTime())
+        )
+        setShows(validShows)
 
-        if (data.length > 0) {
-          const firstDate = getFormattedDate(data[0].date)
+        if (validShows.length > 0) {
+          const firstDate = getFormattedDate(validShows[0].date)
           setSelectedDate(firstDate)
-          const firstTimeForDate = data.find(
+          const firstTimeForDate = validShows.find(
             (show) => getFormattedDate(show.date) === firstDate
           )?.date
           if (firstTimeForDate) {

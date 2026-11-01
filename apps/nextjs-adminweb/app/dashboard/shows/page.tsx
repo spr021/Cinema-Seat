@@ -261,14 +261,16 @@ export default function Shows() {
 
   const renderEventContent = (eventInfo: EventContentArg) => {
     const hall = halls.find(
-      (hall) => hall.id === eventInfo.event._def.extendedProps.hallId
+      (hall) =>
+        String(hall.id) ===
+        String(eventInfo.event._def.extendedProps.hallId)
     )
     const backgroundColor = hall && hall.color
 
     return (
       <div className="p-1 overflow-hidden h-full" style={{ backgroundColor }}>
         <div className="font-medium text-sm text-white truncate">
-          {eventInfo.event._def.extendedProps.title}
+          {eventInfo.event.title}
         </div>
         <div className="text-xs text-white/90 truncate">
           {eventInfo.timeText} • {hall?.name ?? "Hall"}

@@ -36,7 +36,7 @@ export default function RootLayout({
 
       if (token) {
         try {
-          const BASE_URL = "http://localhost:4000/auth"
+          const BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth`
           const sessionResponse = await fetch(`${BASE_URL}/session`, {
             method: "GET",
             headers: {

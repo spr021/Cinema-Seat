@@ -18,7 +18,7 @@ export default function Login() {
     setError("")
 
     try {
-      const BASE_URL = "http://localhost:4000/auth"
+      const BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth`
 
       const response = await fetch(`${BASE_URL}/login`, {
         method: "POST",

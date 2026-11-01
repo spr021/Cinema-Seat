@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { View, Text, ActivityIndicator, Alert, ScrollView } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { IconSymbol } from "@/components/ui/IconSymbol"
@@ -12,6 +12,10 @@ import {
   createReservation,
   markReservationAsPaid,
 } from "@/services/reservationService" // Import createReservation and markReservationAsPaid
+import {
+  holdSeats,
+  releaseHeldSeats,
+} from "@/services/showService" // Seat holds while paying
 import { useAuth } from "@/context/AuthContext" // Import useAuth
 
 export default function SelectTicketScreen() {
@@ -20,6 +24,10 @@ export default function SelectTicketScreen() {
   const { user, token } = useAuth() // Get user and token from AuthContext
   const [selectedSeats, setSelectedSeats] = useState<string[]>([])
   const [isReserving, setIsReserving] = useState<boolean>(false) // Local loading state for reservation
+  // Active seat hold for this user (ms timestamp), shown as a countdown
+  const [holdUntil, setHoldUntil] = useState<number | null>(null)
+  const [remainingSeconds, setRemainingSeconds] = useState(0)
+  const heldSeatIdsRef = useRef<string[]>([])
 
   const {
     selectedDate,
@@ -35,12 +43,54 @@ export default function SelectTicketScreen() {
   } = useShowData(id)
 
   const handleToggleSeat = (seatId: string) => {
+    if (holdUntil) {
+      // Seats are locked while the payment hold is active
+      Alert.alert(
+        "Seats on hold",
+        "Your seats are held for payment. Complete or cancel the payment first."
+      )
+      return
+    }
     setSelectedSeats((prevSeats) =>
       prevSeats.includes(seatId)
         ? prevSeats.filter((seat) => seat !== seatId)
         : [...prevSeats, seatId]
     )
   }
+
+  // Tick the hold countdown every second
+  useEffect(() => {
+    if (!holdUntil) return
+    const tick = () => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((holdUntil - Date.now()) / 1000)
+      )
+      setRemainingSeconds(remaining)
+      if (remaining === 0) {
+        setHoldUntil(null)
+        setSelectedSeats([])
+        Alert.alert(
+          "Hold expired",
+          "Your seats were released because the payment window ended."
+        )
+      }
+    }
+    tick()
+    const interval = setInterval(tick, 1000)
+    return () => clearInterval(interval)
+  }, [holdUntil])
+
+  // Release still-held seats if the user leaves the screen mid-payment
+  useEffect(() => {
+    return () => {
+      const seatIds = heldSeatIdsRef.current
+      const authToken = token
+      if (seatIds.length > 0 && authToken) {
+        releaseHeldSeats(authToken, seatIds)
+      }
+    }
+  }, [token])
 
   const handleProceedToPay = async () => {
     if (!selectedDate || !selectedTime || selectedSeats.length === 0) {
@@ -89,6 +139,21 @@ export default function SelectTicketScreen() {
         throw new Error("Some selected seats could not be found.")
       }
 
+      // Hold the seats for the payment window; the reservation consumes the hold
+      const hold = await holdSeats(token, seatIdsToReserve)
+      if (!hold.success) {
+        Alert.alert(
+          "Seats unavailable",
+          hold.message || "Could not hold those seats. Please try others."
+        )
+        setIsReserving(false)
+        return
+      }
+      heldSeatIdsRef.current = seatIdsToReserve
+      if (hold.holdUntil) {
+        setHoldUntil(new Date(hold.holdUntil).getTime())
+      }
+
       const result = await createReservation(
         currentShow._id, // Pass the show ID
         seatIdsToReserve,
@@ -97,6 +162,10 @@ export default function SelectTicketScreen() {
       )
 
       if (result.success) {
+        // Hold is now consumed by the reservation
+        heldSeatIdsRef.current = []
+        setHoldUntil(null)
+
         Alert.alert(
           "Reservation Successful",
           `Seats ${selectedSeats.join(
@@ -152,6 +221,10 @@ export default function SelectTicketScreen() {
           ]
         )
       } else {
+        // Reservation failed: release the hold so others can book
+        heldSeatIdsRef.current = []
+        setHoldUntil(null)
+        await releaseHeldSeats(token, seatIdsToReserve)
         Alert.alert(
           "Reservation Failed",
           result.message || "Failed to create reservation."
@@ -203,6 +276,13 @@ export default function SelectTicketScreen() {
           </>
         )}
       </ScrollView>
+      {holdUntil !== null && (
+        <View className="bg-yellow-100 border-t border-yellow-300 px-4 py-3">
+          <Text className="text-center text-yellow-800 font-semibold">
+            {`Seats held — ${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")} to complete payment`}
+          </Text>
+        </View>
+      )}
       {!isLoading && !error && (
         <Button
           action="primary"

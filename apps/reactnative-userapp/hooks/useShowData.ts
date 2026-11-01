@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react"
 import { Alert } from "react-native"
 import { fetchShowsByMovieId, fetchShowDetails } from "@/services/showService"
 import { getFormattedDate, getFormattedTime } from "@/utils/date"
+import { useAuth } from "@/context/AuthContext"
 import { Show, Seat } from "@/components/select-ticket/types"
 
 interface UseShowDataResult {
@@ -18,6 +19,8 @@ interface UseShowDataResult {
 }
 
 export function useShowData(movieId: string | string[]): UseShowDataResult {
+  const { user } = useAuth()
+  const userId = user ? String(user._id ?? user.id ?? "") : ""
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -130,12 +133,23 @@ export function useShowData(movieId: string | string[]): UseShowDataResult {
 
   const availableSeats = useMemo(
     () =>
-      shows.find(
+      (shows.find(
         (show) =>
           getFormattedDate(show.date) === selectedDate &&
           getFormattedTime(show.date) === selectedTime
-      )?.seats || [],
-    [shows, selectedDate, selectedTime]
+      )?.seats || []).map((seat) => ({
+        ...seat,
+        // A seat actively held by another user is effectively taken
+        isAvailable:
+          seat.isAvailable &&
+          !(
+            seat.holdBy &&
+            seat.holdUntil &&
+            new Date(seat.holdUntil).getTime() > Date.now() &&
+            String(seat.holdBy) !== userId
+          ),
+      })),
+    [shows, selectedDate, selectedTime, userId]
   )
 
   return {

@@ -4,6 +4,7 @@ import Ticket from "../models/ticket.model" // Import Ticket model
 import Show from "../models/show.model" // Import Show model
 import Seat from "../models/seat.model"
 import { layout1, layout2 } from "../constant/seat.layout"
+import { isBookableBy } from "../utils/seat"
 import { ObjectId } from "mongodb"
 
 interface AuthenticatedRequest extends Request {
@@ -96,10 +97,14 @@ const createReservation = async (
   }
 
   for (const seat of seats) {
-    if (!seat.isAvailable) {
-      return res
-        .status(409)
-        .json({ message: `${seat.row}${seat.seatNumber} seat is already reserved` })
+    if (!isBookableBy(seat, req.user.id)) {
+      const heldBySomeoneElse =
+        seat.holdBy && seat.holdUntil && seat.holdUntil.getTime() > Date.now()
+      return res.status(409).json({
+        message: heldBySomeoneElse
+          ? `${seat.row}${seat.seatNumber} is on hold for another user`
+          : `${seat.row}${seat.seatNumber} seat is already reserved`,
+      })
     }
   }
 
@@ -108,8 +113,21 @@ const createReservation = async (
     const reservedSeatIds: string[] = []
     for (const seat of seats) {
       const updated = await Seat.findOneAndUpdate(
-        { _id: seat._id, isAvailable: true },
-        { isAvailable: false, reservedBy: userObjectId },
+        {
+          _id: seat._id,
+          isAvailable: true,
+          $or: [
+            { holdBy: null, holdUntil: null },
+            { holdUntil: { $lte: new Date() } },
+            { holdBy: userObjectId },
+          ],
+        },
+        {
+          isAvailable: false,
+          reservedBy: userObjectId,
+          holdBy: null,
+          holdUntil: null, // hold is consumed by the reservation
+        },
         { new: true }
       )
       if (!updated) {
@@ -131,7 +149,7 @@ const createReservation = async (
     // Release any seats we flipped so a failed reservation never holds seats
     await Seat.updateMany(
       { _id: { $in: seat_ids_array }, reservedBy: userObjectId },
-      { isAvailable: true, reservedBy: null }
+      { isAvailable: true, reservedBy: null, holdBy: null, holdUntil: null }
     )
     if (error instanceof Error) {
       return res.status(409).json({ message: error.message })

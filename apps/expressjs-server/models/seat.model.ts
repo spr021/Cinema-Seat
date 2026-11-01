@@ -19,6 +19,16 @@ const SeatSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    // Temporary hold while the user is on the payment screen
+    holdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    holdUntil: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 )

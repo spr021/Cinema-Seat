@@ -1,4 +1,11 @@
-import React, { createContext, useState, useContext, useEffect } from "react"
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 import { verifyToken } from "../services/userService"
@@ -87,7 +94,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     saveAuthData()
   }, [token, user])
 
-  const updateUser = (userData: Partial<User>) => {
+  // Stable identities: hooks that depend on these (e.g. useWishlist's
+  // useFocusEffect) must not re-run just because AuthProvider re-rendered
+  const updateUser = useCallback((userData: Partial<User>) => {
     setUser((prevUser) => {
       if (prevUser) {
         const updatedUser = { ...prevUser, ...userData }
@@ -96,15 +105,20 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return prevUser
     })
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setToken(null)
     setUser(null)
     await AsyncStorage.removeItem("token")
     await AsyncStorage.removeItem("user")
     router.push("/")
-  }
+  }, [router])
+
+  const contextValue = useMemo(
+    () => ({ token, setToken, user, setUser, updateUser, logout }),
+    [token, user, updateUser, logout]
+  )
 
   if (loading) {
     // You might want to render a loading spinner here
@@ -112,11 +126,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider
-      value={{ token, setToken, user, setUser, updateUser, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   )
 }
 

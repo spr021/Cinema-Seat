@@ -2,6 +2,7 @@ import Stripe from "stripe"
 import Reservation from "../models/reservation.model"
 import Ticket from "../models/ticket.model"
 import { layout1, layout2 } from "../constant/seat.layout"
+import sendEmail from "../utils/email"
 
 let stripeClient: Stripe | null = null
 
@@ -33,9 +34,12 @@ export function pricePerSeatCents(show: { hall_id?: string } | null): number {
 export async function markReservationPaidAndCreateTicket(
   reservationId: string
 ): Promise<{ reservation: typeof Reservation.prototype; ticket: unknown } | null> {
-  const reservation = await Reservation.findById(reservationId).populate(
-    "show_id"
-  )
+  const reservation = await Reservation.findById(reservationId)
+    .populate({ path: "user_id", select: "email name" })
+    .populate({
+      path: "show_id",
+      populate: { path: "movie_id", select: "title" },
+    })
   if (!reservation) return null
 
   if (reservation.is_paid) {
@@ -49,7 +53,11 @@ export async function markReservationPaidAndCreateTicket(
   reservation.is_paid = true
   await reservation.save()
 
-  const show = reservation.show_id as { hall_id?: string } | null
+  const show = reservation.show_id as {
+    hall_id?: string
+    date?: string
+    movie_id?: { title?: string } | null
+  } | null
   const totalPrice =
     reservation.seat_ids.length * (pricePerSeatCents(show) / 100)
 
@@ -61,6 +69,24 @@ export async function markReservationPaidAndCreateTicket(
     price: totalPrice,
     purchase_date: new Date(),
   })
+
+  // Fire-and-forget receipt email: a broken SMTP server can never block a booking
+  const user = reservation.user_id as { email?: string; name?: string } | null
+  if (user?.email) {
+    sendEmail({
+      email: user.email,
+      subject: "Your Cinema Seat tickets 🎟️",
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+          <h2>Your tickets are booked!</h2>
+          <p>Hi ${user.name ?? "there"},</p>
+          <p><strong>${show?.movie_id?.title ?? "The movie"}</strong>${show?.date ? ` on ${new Date(show.date).toLocaleString()}` : ""}</p>
+          <p>Seats: <strong>${reservation.seat_ids.length}</strong> · Total paid: <strong>$${totalPrice}</strong></p>
+          <p>Show the QR code from My Tickets at the entrance.</p>
+          <p style="color:#6b7280;font-size:13px">Enjoy the movie!</p>
+        </div>`,
+    })
+  }
 
   return { reservation, ticket }
 }

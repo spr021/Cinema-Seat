@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import User, { IUser } from "../models/user.model"
 import { Request as ExpressRequest } from "express"
 import mongoose from "mongoose"
+import sendEmail from "../utils/email"
 import crypto from "crypto"
 
 interface AuthenticatedRequest extends ExpressRequest {
@@ -82,26 +83,34 @@ const forgotPassword = async (
   // 3) Send it to user's email
   const resetURL = `${req.get("origin")}/auth/reset-password?token=${resetToken}`
 
-  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`
-
   try {
-    // Use when setup SMTP service
-    // await sendEmail({
-    //   email: user.email,
-    //   subject: "Your password reset token (valid for 10 min)",
-    //   message,
-    // })
+    const delivery = await sendEmail({
+      email: user.email,
+      subject: "Your password reset token (valid for 10 min)",
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+          <h2>Password reset</h2>
+          <p>Hi ${user.name ?? "there"},</p>
+          <p>Click the button below to choose a new password. The link is valid for 10 minutes.</p>
+          <p><a href="${resetURL}" style="background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Reset password</a></p>
+          <p style="color:#6b7280;font-size:13px">If you didn't request this, you can safely ignore this email.</p>
+        </div>`,
+    })
 
-    res.status(200).json({
+    if (delivery) {
+      return res
+        .status(200)
+        .json({ status: "success", message: "Token sent to email!" })
+    }
+
+    // Email delivery unavailable (e.g. disabled in dev): return the link so
+    // the flow still works locally
+    return res.status(200).json({
       status: "success",
-      message: "Token sent to email!",
-      // For testing purposes, we return the reset URL
+      message: "Email sending is disabled — use the link below.",
       data: {
         email: user.email,
-        subject: "Your password reset token (valid for 10 min)",
-        title: "Use this link to reset your password",
         resetURL,
-        message,
       },
     })
   } catch (err) {

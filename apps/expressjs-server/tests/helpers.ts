@@ -13,6 +13,8 @@ let server: ReturnType<typeof app.listen>
  */
 export async function startTestEnv(): Promise<string> {
   process.env.JWT_SECRET_KEY = "test-secret"
+  // Email delivery is a side effect we don't want in tests
+  process.env.EMAILS_DISABLED = "true"
   mongoServer = await MongoMemoryServer.create()
   await mongoose.connect(mongoServer.getUri())
   server = app.listen(0)

@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response } from "express"
-import { promisify } from "util"
 import JWT, { SignOptions } from "jsonwebtoken"
+import bcrypt from "bcryptjs"
 import User, { IUser } from "../models/user.model"
 import { Request as ExpressRequest } from "express"
 import mongoose from "mongoose"
-import sendEmail from "../utils/email"
 import crypto from "crypto"
 
 interface AuthenticatedRequest extends ExpressRequest {
@@ -31,6 +30,17 @@ const signToken = (id: string, email: string, roles: string[]) => {
   )
 }
 
+// Shape the user object sent to clients. `id` is kept alongside `_id`
+// because the mobile app has historically read `user.id`.
+const toPublicUser = (user: IUser) => ({
+  _id: user.id,
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  avatar: user.avatar,
+  roles: user.roles,
+})
+
 const register = async (req: Request, res: Response) => {
   const { name, email, password, passwordConfirm, avatar } = req.body
   const user = await User.create({
@@ -43,8 +53,8 @@ const register = async (req: Request, res: Response) => {
   })
 
   const token = signToken(user.id, user.email, user.roles)
-  res.status(200).json({
-    data: user,
+  res.status(201).json({
+    user: toPublicUser(user),
     token,
   })
 }
@@ -155,68 +165,73 @@ const login = async (req: Request, res: Response) => {
   }
   const token = signToken(user.id, user.email, user.roles)
   res.status(200).json({
-    user: {
-      id: user.id,
-      email: user.email,
-      roles: user.roles,
-    },
+    user: toPublicUser(user),
     token,
   })
-}
-
-const protectedRoute = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    let token
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1]
-    }
-
-    if (!token) {
-      return next()
-    }
-    JWT.verify(token, process.env.JWT_SECRET_KEY!, {}, (error, callback) => {})
-    const decoded = await promisify(JWT.verify)(token)
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({ message: error.message })
-    }
-  }
-  next()
 }
 
 const getUser = async (req: Request, res: Response) => {
   const { id } = req.params
   const user = await User.findById(id)
   if (!user) {
-    res.status(400).json({ message: "User not found" })
+    return res.status(404).json({ message: "User not found" })
   }
   res.status(200).json(user)
 }
 
-const updateUserById = async (req: Request, res: Response) => {
+const updateUserById = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params
-  // cant update likes from here
-  delete req.body.likes
-  const user = await User.findByIdAndUpdate(id, req.body)
-  if (!user) {
-    res.status(400).json({ message: "User not found" })
+  const requester = req.user
+
+  if (!requester) {
+    return res.status(401).json({ message: "User not authenticated" })
   }
-  const updatedUser = await User.findById(id)
+  // A user may only edit their own account, unless they are an admin
+  if (requester.id !== id && !requester.roles.includes("admin")) {
+    return res.status(403).json({ message: "Not authorized to update this user" })
+  }
+
+  // cant update likes from here; likes has its own endpoint
+  const { name, email, avatar, roles, password } = req.body
+
+  const update: Record<string, unknown> = {}
+  if (name !== undefined) update.name = name
+  if (email !== undefined) update.email = email
+  if (avatar !== undefined) update.avatar = avatar
+  // Only admins may change roles; regular users must use the profile endpoint
+  if (roles !== undefined && requester.roles.includes("admin")) {
+    update.roles = roles
+  }
+  if (password) {
+    // findByIdAndUpdate bypasses the pre-save hook, so hash manually
+    update.password = await bcrypt.hash(password, 10)
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(id, update, {
+    new: true,
+    runValidators: true,
+  })
+  if (!updatedUser) {
+    return res.status(404).json({ message: "User not found" })
+  }
   res.status(200).json(updatedUser)
 }
 
-const deleteUserById = async (req: Request, res: Response) => {
+const deleteUserById = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params
+  const requester = req.user
+
+  if (!requester) {
+    return res.status(401).json({ message: "User not authenticated" })
+  }
+  // A user may only delete their own account, unless they are an admin
+  if (requester.id !== id && !requester.roles.includes("admin")) {
+    return res.status(403).json({ message: "Not authorized to delete this user" })
+  }
+
   const user = await User.findById(id)
   if (!user) {
-    res.status(400).json({ message: "User not found" })
+    return res.status(404).json({ message: "User not found" })
   }
   await User.findByIdAndDelete(id)
   res.status(200).json({ message: "User deleted successfully" })
@@ -240,11 +255,7 @@ const getSession = async (req: Request, res: Response) => {
   }
 
   res.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      roles: user.roles,
-    },
+    user: toPublicUser(user),
   })
 }
 
@@ -456,7 +467,6 @@ const updateUserRole = async (
 export {
   register,
   login,
-  protectedRoute,
   getUser,
   updateUserById,
   deleteUserById,

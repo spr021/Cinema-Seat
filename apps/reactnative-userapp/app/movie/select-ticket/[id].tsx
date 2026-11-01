@@ -92,7 +92,7 @@ export default function SelectTicketScreen() {
       const result = await createReservation(
         currentShow._id, // Pass the show ID
         seatIdsToReserve,
-        user.id, // Pass the actual user ID
+        user._id ?? user.id ?? "", // Pass the actual user ID
         token // Pass the authentication token
       )
 

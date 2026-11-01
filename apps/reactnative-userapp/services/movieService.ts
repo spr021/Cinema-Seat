@@ -14,10 +14,10 @@ export async function fetchAllMovies(): Promise<Movie[]> {
     img: movie.img,
     rating: movie.rating,
     year: movie.year,
-    description: movie.description,
+    summary: movie.summary,
     genre: movie.genre,
     director: movie.director,
-    actors: movie.actors,
+    actors: movie.actors ?? [],
     trailerUrl: movie.trailerUrl,
     duration: movie.duration,
   }))

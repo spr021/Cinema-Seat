@@ -122,11 +122,12 @@ const webhookHandler = async (req: Request, res: Response) => {
 // @route   GET /payments/return
 // @access  Public
 const handleReturn = async (req: Request, res: Response) => {
+  const appUrl = process.env.APP_URL ?? "http://localhost:8081"
   const html = (message: string) =>
     res
       .status(200)
       .send(
-        `<html><body style="font-family:sans-serif;text-align:center;padding-top:80px"><h1>${message}</h1><p>You can close this window and return to the app.</p></body></html>`
+        `<html><body style="font-family:sans-serif;text-align:center;padding-top:80px"><h1>${message}</h1><p><a href="${appUrl}">Back to the app</a></p></body></html>`
       )
 
   if (req.query.cancelled) {

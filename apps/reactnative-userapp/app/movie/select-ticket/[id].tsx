@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react"
-import { View, Text, ActivityIndicator, Alert, ScrollView } from "react-native"
+import { View, Text, ActivityIndicator, ScrollView, Platform } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { IconSymbol } from "@/components/ui/IconSymbol"
 import { Button, ButtonText } from "@/components/ui/button"
@@ -20,6 +20,7 @@ import {
   releaseHeldSeats,
 } from "@/services/showService" // Seat holds while paying
 import { useAuth } from "@/context/AuthContext" // Import useAuth
+import { showAlert } from "@/utils/alert" // Alert.alert is a no-op on web
 
 export default function SelectTicketScreen() {
   const { id } = useLocalSearchParams()
@@ -48,7 +49,7 @@ export default function SelectTicketScreen() {
   const handleToggleSeat = (seatId: string) => {
     if (holdUntil) {
       // Seats are locked while the payment hold is active
-      Alert.alert(
+      showAlert(
         "Seats on hold",
         "Your seats are held for payment. Complete or cancel the payment first."
       )
@@ -73,7 +74,7 @@ export default function SelectTicketScreen() {
       if (remaining === 0) {
         setHoldUntil(null)
         setSelectedSeats([])
-        Alert.alert(
+        showAlert(
           "Hold expired",
           "Your seats were released because the payment window ended."
         )
@@ -104,14 +105,20 @@ export default function SelectTicketScreen() {
       const checkout = await createCheckoutSession(reservationId, token)
 
       if (checkout.stripeEnabled && checkout.url) {
+        if (Platform.OS === "web") {
+          // Same-tab navigation: window.open after awaits is popup-blocked,
+          // and the Stripe return page links back to the app
+          window.location.assign(checkout.url)
+          return
+        }
         await WebBrowser.openBrowserAsync(checkout.url)
         const verify = await verifyReservationPayment(reservationId, token)
         if (verify.is_paid) {
-          Alert.alert("Payment successful 🎉", "Your tickets are ready.", [
+          showAlert("Payment successful 🎉", "Your tickets are ready.", [
             { text: "OK", onPress: () => router.push("/(tabs)/my-tickets") },
           ])
         } else {
-          Alert.alert(
+          showAlert(
             "Payment not completed",
             "Your seats are reserved — you can pay from My Tickets.",
             [{ text: "OK", onPress: () => router.push("/(tabs)/my-tickets") }]
@@ -121,7 +128,7 @@ export default function SelectTicketScreen() {
       }
 
       // Stripe not configured on the server: mock payment flow
-      Alert.alert(
+      showAlert(
         "Payment Confirmation",
         "Do you want to mark this reservation as paid?",
         [
@@ -138,10 +145,10 @@ export default function SelectTicketScreen() {
                 token
               )
               if (paymentResult.success) {
-                Alert.alert("Payment Successful", paymentResult.message)
+                showAlert("Payment Successful", paymentResult.message)
                 router.push("/(tabs)/my-tickets")
               } else {
-                Alert.alert(
+                showAlert(
                   "Payment Failed",
                   paymentResult.message ||
                     "Could not mark reservation as paid."
@@ -152,7 +159,7 @@ export default function SelectTicketScreen() {
         ]
       )
     } catch (error: any) {
-      Alert.alert(
+      showAlert(
         "Payment Error",
         error.message || "Something went wrong starting the payment."
       )
@@ -162,7 +169,7 @@ export default function SelectTicketScreen() {
 
   const handleProceedToPay = async () => {
     if (!selectedDate || !selectedTime || selectedSeats.length === 0) {
-      Alert.alert(
+      showAlert(
         "Selection Required",
         "Please select a date, time, and at least one seat."
       )
@@ -170,7 +177,7 @@ export default function SelectTicketScreen() {
     }
 
     if (!user || !token) {
-      Alert.alert(
+      showAlert(
         "Authentication Required",
         "Please log in to make a reservation."
       )
@@ -188,7 +195,7 @@ export default function SelectTicketScreen() {
     console.log("Current Show:", selectedTime)
 
     if (!currentShow) {
-      Alert.alert("Error", "Selected show not found.")
+      showAlert("Error", "Selected show not found.")
       setIsReserving(false) // End loading
       return
     }
@@ -210,7 +217,7 @@ export default function SelectTicketScreen() {
       // Hold the seats for the payment window; the reservation consumes the hold
       const hold = await holdSeats(token, seatIdsToReserve)
       if (!hold.success) {
-        Alert.alert(
+        showAlert(
           "Seats unavailable",
           hold.message || "Could not hold those seats. Please try others."
         )
@@ -234,7 +241,7 @@ export default function SelectTicketScreen() {
         heldSeatIdsRef.current = []
         setHoldUntil(null)
 
-        Alert.alert(
+        showAlert(
           "Reservation Successful",
           `Seats ${selectedSeats.join(
             ", "
@@ -246,7 +253,7 @@ export default function SelectTicketScreen() {
                 if (result.reservation?._id) {
                   completePayment(result.reservation._id)
                 } else {
-                  Alert.alert("Error", "Reservation ID not found for payment.")
+                  showAlert("Error", "Reservation ID not found for payment.")
                   router.push("/(tabs)/my-tickets")
                 }
               },
@@ -258,13 +265,13 @@ export default function SelectTicketScreen() {
         heldSeatIdsRef.current = []
         setHoldUntil(null)
         await releaseHeldSeats(token, seatIdsToReserve)
-        Alert.alert(
+        showAlert(
           "Reservation Failed",
           result.message || "Failed to create reservation."
         )
       }
     } catch (err: any) {
-      Alert.alert(
+      showAlert(
         "Reservation Failed",
         err.message || "Failed to create reservation."
       )

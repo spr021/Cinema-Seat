@@ -52,8 +52,16 @@ cp apps/nextjs-adminweb/.env.example apps/nextjs-adminweb/.env
 cp apps/reactnative-userapp/.env.example apps/reactnative-userapp/.env
 # edit apps/expressjs-server/.env and point MONGO_DB_URL at your database
 
-yarn dev          # runs all three apps via turbo
+yarn seed          # optional: demo accounts + sample movies/shows (idempotent)
+yarn dev           # runs all three apps via turbo
 ```
+
+### Demo accounts (after `yarn seed`)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin (admin panel + ticket check-in) | `admin@cinema.test` | `admin12345` |
+| Customer (mobile app) | `user@cinema.test` | `user12345` |
 
 - API server: http://localhost:4000
 - Admin panel: http://localhost:3000 (log in with a user whose `roles`

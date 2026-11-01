@@ -1,7 +1,9 @@
 import "dotenv/config"
 import mongoose from "mongoose"
+import { createServer } from "http"
 import app from "./app"
 import { startHoldSweep } from "./jobs/hold-sweep"
+import { initRealtime } from "./services/realtime"
 
 const port = process.env.PORT || 4000
 
@@ -10,7 +12,9 @@ mongoose
   .then(() => {
     console.log("Connected to database")
     startHoldSweep()
-    app.listen(port, () => {
+    const server = createServer(app)
+    initRealtime(server)
+    server.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`)
     })
   })

@@ -1,4 +1,5 @@
 import Seat from "../models/seat.model"
+import { broadcastSeatsForSeatIds } from "../services/realtime"
 
 const SWEEP_INTERVAL_MS = 60 * 1000 // every minute
 
@@ -7,10 +8,20 @@ const SWEEP_INTERVAL_MS = 60 * 1000 // every minute
  * not work here because we need to clear holdBy/holdUntil, not delete the seat.
  */
 export async function sweepExpiredHolds(): Promise<number> {
+  const expired = await Seat.find({
+    holdUntil: { $lte: new Date() },
+    reservedBy: null,
+  }).select("_id")
+
+  if (expired.length === 0) return 0
+
   const result = await Seat.updateMany(
-    { holdUntil: { $lte: new Date() }, reservedBy: null },
+    { _id: { $in: expired.map((s) => s._id) } },
     { holdBy: null, holdUntil: null }
   )
+
+  // Let everyone watching those shows see the seats open up again
+  await broadcastSeatsForSeatIds(expired.map((s) => s._id))
   return result.modifiedCount ?? 0
 }
 

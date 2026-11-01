@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import Seat from "../models/seat.model"
 import Show from "../models/show.model"
 import { HOLD_DURATION_MS, isBookableBy } from "../utils/seat"
+import { broadcastSeatsForSeatIds } from "../services/realtime"
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -109,6 +110,7 @@ const reserveMultipleSeats = async (
       reserved.push(updated)
     }
 
+    await broadcastSeatsForSeatIds(seatIds)
     res.status(200).json({
       message: "Seats reserved successfully",
       updatedSeats: reserved,
@@ -169,6 +171,7 @@ const holdSeats = async (req: AuthenticatedRequest, res: Response) => {
       held.push(seat)
     }
 
+    await broadcastSeatsForSeatIds(seatIds)
     res.status(200).json({
       message: `Seats held for ${HOLD_DURATION_MS / 60000} minutes`,
       holdUntil,
@@ -202,6 +205,7 @@ const releaseHeldSeats = async (req: AuthenticatedRequest, res: Response) => {
     { holdBy: null, holdUntil: null }
   )
 
+  await broadcastSeatsForSeatIds(seatIds)
   res.status(200).json({ message: "Holds released", success: true })
 }
 

@@ -3,6 +3,7 @@ import { Alert } from "react-native"
 import { fetchShowsByMovieId, fetchShowDetails } from "@/services/showService"
 import { getFormattedDate, getFormattedTime } from "@/utils/date"
 import { useAuth } from "@/context/AuthContext"
+import { subscribeToShow } from "@/services/realtime"
 import { Show, Seat } from "@/components/select-ticket/types"
 
 interface UseShowDataResult {
@@ -130,6 +131,29 @@ export function useShowData(movieId: string | string[]): UseShowDataResult {
       ).sort(),
     [shows, selectedDate]
   )
+
+  const currentShowId = useMemo(
+    () =>
+      shows.find(
+        (show) =>
+          getFormattedDate(show.date) === selectedDate &&
+          getFormattedTime(show.date) === selectedTime
+      )?._id,
+    [shows, selectedDate, selectedTime]
+  )
+
+  // Live seat map: subscribe while a specific show is selected
+  useEffect(() => {
+    if (!currentShowId) return
+    const unsubscribe = subscribeToShow(currentShowId, ({ showId, seats }) => {
+      setShows((prevShows) =>
+        prevShows.map((show) =>
+          show._id === showId ? { ...show, seats } : show
+        )
+      )
+    })
+    return unsubscribe
+  }, [currentShowId])
 
   const availableSeats = useMemo(
     () =>

@@ -5,6 +5,7 @@ import Show from "../models/show.model" // Import Show model
 import Seat from "../models/seat.model"
 import { layout1, layout2 } from "../constant/seat.layout"
 import { isBookableBy } from "../utils/seat"
+import { broadcastSeatsForSeatIds } from "../services/realtime"
 import { ObjectId } from "mongodb"
 
 interface AuthenticatedRequest extends Request {
@@ -144,6 +145,7 @@ const createReservation = async (
       show_id: new ObjectId(show_id),
     })
 
+    await broadcastSeatsForSeatIds(seat_ids_array)
     return res.status(201).json(reservation)
   } catch (error) {
     // Release any seats we flipped so a failed reservation never holds seats

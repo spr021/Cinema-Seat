@@ -4,7 +4,6 @@ import User from "../models/user.model"
 import Movie from "../models/movie.model"
 import Show from "../models/show.model"
 import { ObjectId } from "mongodb"
-
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string
@@ -99,4 +98,113 @@ const getStats = async (req: Request, res: Response) => {
   }
 }
 
-export { getTicketsByUserId, validateTicket, getStats }
+// @desc    Charts data for the admin dashboard
+// @route   GET /api/v1/ticket/analytics
+// @access  Private/Admin
+const getAnalytics = async (req: Request, res: Response) => {
+  try {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+    // Revenue per day over the last 30 days
+    const revenueByDay = await Ticket.aggregate([
+      { $match: { purchase_date: { $gte: since } } },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$purchase_date" },
+          },
+          revenue: { $sum: "$price" },
+          tickets: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, day: "$_id", revenue: 1, tickets: 1 } },
+    ])
+
+    // Best selling movies (by seats sold across all their shows)
+    const topMovies = await Ticket.aggregate([
+      {
+        $group: {
+          _id: "$show_id",
+          ticketsSold: { $sum: { $size: "$seat_ids" } },
+          revenue: { $sum: "$price" },
+        },
+      },
+      { $sort: { ticketsSold: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "shows",
+          localField: "_id",
+          foreignField: "_id",
+          as: "show",
+        },
+      },
+      { $unwind: "$show" },
+      {
+        $lookup: {
+          from: "movies",
+          localField: "show.movie_id",
+          foreignField: "_id",
+          as: "movie",
+        },
+      },
+      { $unwind: "$movie" },
+      {
+        $group: {
+          _id: "$movie._id",
+          title: { $first: "$movie.title" },
+          ticketsSold: { $sum: "$ticketsSold" },
+          revenue: { $sum: "$revenue" },
+        },
+      },
+      { $sort: { ticketsSold: -1 } },
+      { $project: { _id: 0, title: 1, ticketsSold: 1, revenue: 1 } },
+    ])
+
+    // Occupancy per show: taken seats vs total seats
+    const occupancy = await Show.aggregate([
+      {
+        $lookup: {
+          from: "seats",
+          let: { seatIds: "$seats" },
+          pipeline: [
+            { $match: { $expr: { $in: ["$_id", "$$seatIds"] } } },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: 1 },
+                taken: {
+                  $sum: {
+                    $cond: [{ $ne: ["$reservedBy", null] }, 1, 0],
+                  },
+                },
+              },
+            },
+          ],
+          as: "stats",
+        },
+      },
+      { $unwind: { path: "$stats", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          showId: { $toString: "$_id" },
+          date: 1,
+          totalSeats: { $ifNull: ["$stats.total", 0] },
+          takenSeats: { $ifNull: ["$stats.taken", 0] },
+        },
+      },
+      { $sort: { date: 1 } },
+    ])
+
+    res.status(200).json({ revenueByDay, topMovies, occupancy })
+  } catch (error) {
+    console.error("Error getting analytics:", error)
+    res
+      .status(500)
+      .json({ message: "An error occurred while getting analytics." })
+  }
+}
+
+export { getTicketsByUserId, validateTicket, getStats, getAnalytics }

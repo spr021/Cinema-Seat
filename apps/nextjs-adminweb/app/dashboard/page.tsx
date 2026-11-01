@@ -3,6 +3,17 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts"
+import {
   UsersIcon,
   VideoCameraIcon,
   CalendarIcon,
@@ -15,6 +26,31 @@ interface Stats {
   totalShows: number
   totalTickets: number
   totalRevenue: number
+}
+
+interface RevenuePoint {
+  day: string
+  revenue: number
+  tickets: number
+}
+
+interface TopMovie {
+  title: string
+  ticketsSold: number
+  revenue: number
+}
+
+interface OccupancyPoint {
+  showId: string
+  date: string
+  totalSeats: number
+  takenSeats: number
+}
+
+interface Analytics {
+  revenueByDay: RevenuePoint[]
+  topMovies: TopMovie[]
+  occupancy: OccupancyPoint[]
 }
 
 const statsConfig = [
@@ -32,10 +68,11 @@ const quickActions = [
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
+  const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchAdminData = async () => {
       try {
         const token =
           localStorage.getItem("token") || sessionStorage.getItem("token")
@@ -43,19 +80,24 @@ export default function Dashboard() {
           setError("No authentication token found.")
           return
         }
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/ticket/stats`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        if (!response.ok) {
-          const errorData = await response.json()
+
+        const headers = { Authorization: `Bearer ${token}` }
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+
+        const [statsResponse, analyticsResponse] = await Promise.all([
+          fetch(`${apiBase}/ticket/stats`, { headers }),
+          fetch(`${apiBase}/ticket/analytics`, { headers }),
+        ])
+
+        if (!statsResponse.ok) {
+          const errorData = await statsResponse.json()
           throw new Error(errorData.message || "Failed to fetch stats")
         }
-        setStats(await response.json())
+        setStats(await statsResponse.json())
+
+        if (analyticsResponse.ok) {
+          setAnalytics(await analyticsResponse.json())
+        }
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message)
@@ -65,7 +107,7 @@ export default function Dashboard() {
       }
     }
 
-    fetchStats()
+    fetchAdminData()
   }, [])
 
   const formatValue = (key: (typeof statsConfig)[number]["key"]) => {
@@ -111,17 +153,72 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-        {/* Tickets Overview */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="p-6">
-            <h3 className="text-base font-semibold leading-6 text-gray-900">
-              Tickets Overview
-            </h3>
-            <p className="mt-2 text-sm text-gray-700">
-              {stats
-                ? `${stats.totalTickets.toLocaleString()} tickets sold across all shows.`
-                : "Loading ticket data…"}
-            </p>
+        {/* Revenue over time */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-6">
+          <h3 className="text-base font-semibold leading-6 text-gray-900">
+            Revenue (last 30 days)
+          </h3>
+          <div className="mt-4 h-64">
+            {analytics && analytics.revenueByDay.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={analytics.revenueByDay}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(day: string) => day.slice(5)}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    formatter={(value) => [`$${value}`, "Revenue"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#4f46e5"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="pt-20 text-center text-sm text-gray-500">
+                No sales in the last 30 days yet.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Top movies */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-6">
+          <h3 className="text-base font-semibold leading-6 text-gray-900">
+            Top movies (tickets sold)
+          </h3>
+          <div className="mt-4 h-64">
+            {analytics && analytics.topMovies.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.topMovies} layout="vertical">
+                  <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="title"
+                    width={120}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <Tooltip />
+                  <Bar
+                    dataKey="ticketsSold"
+                    fill="#4f46e5"
+                    radius={[0, 4, 4, 0]}
+                    barSize={18}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="pt-20 text-center text-sm text-gray-500">
+                No tickets sold yet.
+              </p>
+            )}
           </div>
         </div>
 
@@ -141,6 +238,54 @@ export default function Dashboard() {
                   {action.name}
                 </Link>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Show occupancy */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="p-6">
+            <h3 className="text-base font-semibold leading-6 text-gray-900">
+              Show occupancy
+            </h3>
+            <div className="mt-4 flow-root">
+              {analytics && analytics.occupancy.length > 0 ? (
+                <ul role="list" className="-my-2 divide-y divide-gray-200">
+                  {analytics.occupancy.map((show) => {
+                    const pct =
+                      show.totalSeats > 0
+                        ? Math.round((show.takenSeats / show.totalSeats) * 100)
+                        : 0
+                    return (
+                      <li key={show.showId} className="py-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-gray-900">
+                            {show.date
+                              ? new Date(show.date).toLocaleString([], {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                })
+                              : "Show"}
+                          </span>
+                          <span className="text-gray-500">
+                            {show.takenSeats}/{show.totalSeats} seats
+                          </span>
+                        </div>
+                        <div className="mt-2 h-2 rounded-full bg-gray-100">
+                          <div
+                            className="h-2 rounded-full bg-indigo-600"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                <p className="py-6 text-center text-sm text-gray-500">
+                  No shows created yet.
+                </p>
+              )}
             </div>
           </div>
         </div>

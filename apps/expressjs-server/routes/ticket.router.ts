@@ -3,6 +3,7 @@ import {
   getTicketsByUserId,
   validateTicket,
   getStats,
+  getAnalytics,
 } from "../controllers/ticket.controller"
 import asyncMiddleware from "../middlewares/async"
 import {
@@ -25,6 +26,12 @@ router.get(
   authenticateToken,
   authorizeRoles(["admin"]),
   asyncMiddleware(getStats)
+)
+router.get(
+  "/analytics",
+  authenticateToken,
+  authorizeRoles(["admin"]),
+  asyncMiddleware(getAnalytics)
 )
 
 export default router

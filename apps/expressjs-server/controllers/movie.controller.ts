@@ -42,20 +42,22 @@ const createMovie = async (req: Request, res: Response) => {
 const updateMovieById = async (req: Request, res: Response) => {
   const { id } = req.params
   // cant update shows here, update with shows api
-  delete req.params.shows
-  const movie = await Movie.findByIdAndUpdate(id, req.body)
+  delete req.body.shows
+  const movie = await Movie.findByIdAndUpdate(id, req.body, {
+    new: true,
+    runValidators: true,
+  })
   if (!movie) {
-    res.status(400).json({ message: "Movie not found" })
+    return res.status(404).json({ message: "Movie not found" })
   }
-  const updatedMovie = await Movie.findById(id)
-  res.status(200).json(updatedMovie)
+  res.status(200).json(movie)
 }
 
 const deleteMovieById = async (req: Request, res: Response) => {
   const { id } = req.params
   const movie = await Movie.findById(id)
   if (!movie) {
-    res.status(400).json({ message: "Movie not found" })
+    return res.status(404).json({ message: "Movie not found" })
   }
   const shows = await Show.find({ _id: { $in: movie?.shows } })
   for (const show of shows) {

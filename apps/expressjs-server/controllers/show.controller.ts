@@ -9,7 +9,7 @@ const createShows = async (req: Request, res: Response) => {
   const { date, hall_id, movie_id } = req.body
 
   if (!date) {
-    res.status(400).json({ message: "input at least one date" })
+    return res.status(400).json({ message: "input at least one date" })
   }
 
   try {
@@ -38,16 +38,13 @@ const getShowsByMovieId = async (req: Request, res: Response) => {
   const { movieId } = req.params
   const movie = await Movie.findById(movieId)
   if (!movie) {
-    res.status(400).json({ message: "movie not found" })
+    return res.status(404).json({ message: "movie not found" })
   }
+  // A movie can legitimately have no shows yet; return an empty list
   const shows = await Show.find({
-    _id: { $in: movie?.shows },
-  })
+    _id: { $in: movie.shows },
+  }).populate("seats")
 
-  if (!shows) {
-    res.status(400).json({ message: "shows not found" })
-  }
-  await shows[0].populate("seats")
   res.status(200).json(shows)
 }
 
@@ -55,7 +52,7 @@ const getShowById = async (req: Request, res: Response) => {
   const { showId } = req.params
   const show = await Show.findById(showId).populate("seats")
   if (!show) {
-    res.status(500).json({ message: "show not found" })
+    return res.status(404).json({ message: "show not found" })
   }
   res.status(200).json(show)
 }
@@ -64,22 +61,26 @@ const updateShowById = async (req: Request, res: Response) => {
   const { showId } = req.params
   // cant update seats here | use seats api
   delete req.body.seats
-  const show = await Show.findByIdAndUpdate(showId, req.body)
+  const show = await Show.findByIdAndUpdate(showId, req.body, {
+    new: true,
+    runValidators: true,
+  })
   if (!show) {
-    res.status(400).json({ message: "Show not found" })
+    return res.status(404).json({ message: "Show not found" })
   }
-  const updatedShow = await Show.findById(showId)
-  res.status(200).json(updatedShow)
+  res.status(200).json(show)
 }
 
 const deleteShowById = async (req: Request, res: Response) => {
   const { showId } = req.params
   const show = await Show.findById(showId)
   if (!show) {
-    res.status(400).json({ message: "Show not found" })
+    return res.status(404).json({ message: "Show not found" })
   }
   await Seat.deleteMany({ _id: { $in: show?.seats } })
   await Show.findByIdAndDelete(showId)
+  // Remove the now-deleted show from its movie, otherwise the reference goes stale
+  await Movie.updateOne({ shows: showId }, { $pull: { shows: showId } })
   res.status(200).json({ message: "Show deleted successfully" })
 }
 
@@ -87,7 +88,7 @@ const deleteAllShowsByMovieId = async (req: Request, res: Response) => {
   const { movieId } = req.params
   const movie = await Movie.findById(movieId)
   if (!movie) {
-    res.status(400).json({ message: "Movie not found" })
+    return res.status(404).json({ message: "Movie not found" })
   }
 
   const shows = await Show.find({ _id: { $in: movie?.shows } })

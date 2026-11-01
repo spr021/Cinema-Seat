@@ -26,9 +26,9 @@ Run from the repo root unless noted. Package manager is **yarn 1** (`packageMana
 
 ## Environment variables
 
-Each app has a local gitignored `.env`. Key names:
+Each app has a local gitignored `.env` (see the `.env.example` per app). Key names:
 
-- Server: `PORT`, `MONGO_DB_URL`, `JWT_SECRET_KEY`, `JWT_SECRET_EXPIER` (typo is the real name — keep it)
+- Server: `PORT`, `MONGO_DB_URL`, `JWT_SECRET_KEY`, `JWT_SECRET_EXPIER` (typo is the real name). Optional: `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (without them the app uses mock payments), `EMAIL_HOST/PORT/USERNAME/PASSWORD` (without them Nodemailer uses an auto-created Ethereal test account), `EMAILS_DISABLED=true` (skips email — set in tests).
 - Admin web: `NEXT_PUBLIC_API_BASE_URL`
 - Expo app: `EXPO_PUBLIC_API_BASE_URL`
 
@@ -36,18 +36,20 @@ Each app has a local gitignored `.env`. Key names:
 
 ## API layer rules (expressjs-server)
 
-`index.ts` boots Mongoose and listens; `app.ts` builds the Express app (importable by tests without a DB). Strict layering: `routes/*.router.ts` → `controllers/*.controller.ts` → `models/*.model.ts` (Mongoose schemas). To add an endpoint: create controller + router, then mount it in `app.ts` (currently mounts `/movie`, `/show`, `/seat`, `/hall`, `/reservation`, `/ticket`, `/auth`).
+`index.ts` boots Mongoose, starts the hold sweep, and serves the Express app over an HTTP server that also carries Socket.io; `app.ts` builds the Express app (importable by tests without a DB). Strict layering: `routes/*.router.ts` → `controllers/*.controller.ts` → `models/*.model.ts` (Mongoose schemas). To add an endpoint: create controller + router, then mount it in `app.ts` (currently mounts `/movie`, `/show`, `/seat`, `/hall`, `/reservation`, `/ticket`, `/auth`, `/payments`).
 
 - Wrap async handlers with the helper in `middlewares/async.ts`; the global error handler in `middlewares/error.ts` must be the last middleware (it maps Mongoose ValidationError/CastError/duplicate-key to 4xx).
 - Auth: `middlewares/auth.middleware.ts` exports `authenticateToken` (Bearer JWT) and `authorizeRoles(roles)`. The JWT payload is `{ id, email, roles }`; `types/express.d.ts` augments `Request` with it. Users may only edit/delete their own account unless admin.
 - `register`/`login`/`getSession` respond with `{ user: toPublicUser(user), token }` — never include the password hash.
 - User profile/auth endpoints live under the `auth` router (not a `user` router), including `/auth/profile`, `/auth/forgot-password`, `/auth/reset-password/:token`, `/auth/toggle-movie-like`.
-- Reservation endpoints require a token; a reservation belongs to the token's user. Seat reservation (`/seat/reserve-multiple` and `createReservation`) is all-or-nothing with conflict rollback.
+- Reservation endpoints require a token; a reservation belongs to the token's user. Seat booking (`/seat/hold`, `/seat/reserve-multiple`, `createReservation`) is all-or-nothing with conflict rollback, and hold-aware (`holdBy`/`holdUntil` on Seat, swept by `jobs/hold-sweep.ts`).
+- Payments: `POST /payments/create-checkout/:id` returns a Stripe Checkout URL (or `{stripeEnabled:false}` → mock flow). `POST /payments/webhook` needs the **raw body** (`express.raw` is mounted before `json()` in `app.ts`) and verifies the signature. `markReservationPaidAndCreateTicket` in `services/payments.ts` is the single idempotent path that marks paid + issues the ticket + sends the receipt email — always pay through it.
+- Real-time: `services/realtime.ts` owns the Socket.io server; after any seat mutation call `broadcastSeatsForSeatIds(...)` so room `show:<id>` clients get `seats:update`.
 
 ## Frontend ↔ API contract
 
-- Admin web reads `process.env.NEXT_PUBLIC_API_BASE_URL` per page/hook (no shared axios client); data hooks in `app/hooks/` use react-query; auth pages in `app/auth/`.
-- Expo app: all API calls go through `services/*.service.ts` (or `services/*.ts`) using `process.env.EXPO_PUBLIC_API_BASE_URL`. Global auth state in `context/AuthContext.tsx`; feature hooks in `hooks/`.
+- Admin web reads `process.env.NEXT_PUBLIC_API_BASE_URL` per page/hook (no shared axios client); data hooks in `app/hooks/` use react-query; auth pages in `app/auth/`; check-in scanner in `app/dashboard/checkin/`.
+- Expo app: all API calls go through `services/*.ts` (or `services/*.ts`) using `process.env.EXPO_PUBLIC_API_BASE_URL`. Live seats come from `services/realtime.ts` (Socket.io). Global auth state in `context/AuthContext.tsx`; feature hooks in `hooks/`.
 - Adding/changing a backend endpoint usually means touching three places: server route/controller, admin web (hook/page), and the matching Expo `services/` file.
 
 ## Coding conventions

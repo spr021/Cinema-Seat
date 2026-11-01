@@ -17,7 +17,8 @@ interface AuthenticatedRequest extends Request {
   }
 }
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:4000"
+// The checkout return page lives on this server; browsers reach it on localhost
+const API_BASE_URL = `http://localhost:${process.env.PORT ?? 4000}`
 
 // @desc    Create a Stripe Checkout session for a reservation
 // @route   POST /payments/create-checkout/:reservationId

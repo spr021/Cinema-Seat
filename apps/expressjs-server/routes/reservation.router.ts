@@ -15,8 +15,14 @@ router.get(
   authenticateToken,
   asyncMiddleware(getReservationsByUserId)
 )
-router.get("/:reservationId", asyncMiddleware(getReservationById))
-router.post("/", asyncMiddleware(createReservation))
+router.get(
+  "/:reservationId",
+  authenticateToken,
+  asyncMiddleware(getReservationById)
+)
+// Creating a reservation requires a logged-in user; the reservation belongs
+// to whoever the token belongs to
+router.post("/", authenticateToken, asyncMiddleware(createReservation))
 
 router.put(
   "/:reservationId/pay",

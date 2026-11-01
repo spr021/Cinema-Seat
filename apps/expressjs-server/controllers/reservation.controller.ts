@@ -2,8 +2,8 @@ import { Request, Response } from "express"
 import Reservation from "../models/reservation.model"
 import Ticket from "../models/ticket.model" // Import Ticket model
 import Show from "../models/show.model" // Import Show model
-import { startSession } from "mongoose"
 import Seat from "../models/seat.model"
+import { layout1, layout2 } from "../constant/seat.layout"
 import { ObjectId } from "mongodb"
 
 interface AuthenticatedRequest extends Request {
@@ -18,7 +18,7 @@ const getReservationById = async (req: Request, res: Response) => {
   const { reservationId } = req.params
   const reservation = await Reservation.findById(reservationId)
   if (!reservation) {
-    res.status(400).json({ message: "reservation not found!" })
+    return res.status(404).json({ message: "reservation not found!" })
   }
   res.status(200).json(reservation)
 }
@@ -38,66 +38,86 @@ const getReservationsByUserId = async (
     .populate({
       path: "show_id",
       select: "date movie_id hall_id",
-      populate: [
-        { path: "movie_id", select: "title img" },
-        { path: "hall_id", select: "name" },
-      ],
+      populate: [{ path: "movie_id", select: "title img" }],
     })
-
-  if (!reservations) {
-    return res.status(200).json([]) // Return empty array if no reservations found
-  }
-  console.log(reservations)
 
   res.status(200).json(reservations)
 }
 
-const releaseSeat = async (seat_id: ObjectId) => {
-  const seat = await Seat.findById(seat_id)
-
-  if (seat && !seat.isAvailable && !seat.reservedBy) {
-    // Check if the seat is not confirmed (e.g., no reservedBy information) and reset it.
-    seat.isAvailable = true
-    await seat.save()
+const createReservation = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  // The reservation always belongs to the authenticated user, never to a
+  // user_id passed in the body
+  if (!req.user?.id) {
+    return res.status(401).json({ message: "User not authenticated." })
   }
-}
+  const userObjectId = new ObjectId(req.user.id)
+  const { seat_ids, show_id } = req.body
 
-const createReservation = async (req: Request, res: Response) => {
-  const session = await startSession()
+  // The mobile app sends seat_ids as a JSON string; accept both forms
+  let seat_ids_array: string[]
   try {
-    session.startTransaction()
-    const { user_id, seat_ids, show_id } = req.body
-    const seat_ids_array = JSON.parse(seat_ids)
+    seat_ids_array =
+      typeof seat_ids === "string" ? JSON.parse(seat_ids) : seat_ids
+  } catch {
+    return res.status(400).json({ message: "seat_ids must be valid JSON" })
+  }
 
-    if (!user_id) {
-      return res.status(400).json({ message: "User ID is required." })
+  if (!Array.isArray(seat_ids_array) || seat_ids_array.length === 0) {
+    return res.status(400).json({ message: "input at least one seat id" })
+  }
+  if (!show_id) {
+    return res.status(400).json({ message: "show_id is required." })
+  }
+
+  const show = await Show.findById(show_id)
+  if (!show) {
+    return res.status(404).json({ message: "Show not found." })
+  }
+
+  // All seats must belong to the selected show, otherwise reserving would
+  // flip seats of a different screening
+  const showSeatIds = show.seats.map((id) => String(id))
+  const foreignSeats = seat_ids_array.filter(
+    (seatId) => !showSeatIds.includes(String(seatId))
+  )
+  if (foreignSeats.length > 0) {
+    return res
+      .status(400)
+      .json({ message: "Some seats do not belong to this show." })
+  }
+
+  const seats = await Seat.find({ _id: { $in: seat_ids_array } })
+
+  if (seats.length !== seat_ids_array.length) {
+    return res.status(404).json({ message: "Seat(s) not found" })
+  }
+
+  for (const seat of seats) {
+    if (!seat.isAvailable) {
+      return res
+        .status(409)
+        .json({ message: `${seat.row}${seat.seatNumber} seat is already reserved` })
     }
-    const userObjectId = new ObjectId(user_id)
+  }
 
-    if (!seat_ids_array.length) {
-      res.status(400).json({ message: "input at least one seat id" })
-    }
-
-    const seats = await Seat.find({ _id: { $in: seat_ids_array } }).session(
-      session
-    )
-
-    if (!seats.length) {
-      return res.status(404).send("Seat(s) not found")
-    }
-
+  try {
+    // Reserve all seats first; roll back if creating the reservation fails
+    const reservedSeatIds: string[] = []
     for (const seat of seats) {
-      if (!seat.isAvailable) {
+      const updated = await Seat.findOneAndUpdate(
+        { _id: seat._id, isAvailable: true },
+        { isAvailable: false, reservedBy: userObjectId },
+        { new: true }
+      )
+      if (!updated) {
         throw new Error(
-          `${seat.row}${seat.seatNumber} seat is already reserved`
+          `${seat.row}${seat.seatNumber} seat was just taken by someone else`
         )
       }
-      // Optimistically lock the seat by checking the version
-      seat.isAvailable = false
-      seat.reservedBy = userObjectId
-      await seat.save({ session })
-
-      setTimeout(() => releaseSeat(seat._id), 1000 * 60 * 15) //15 min
+      reservedSeatIds.push(String(seat._id))
     }
 
     const reservation = await Reservation.create({
@@ -106,38 +126,46 @@ const createReservation = async (req: Request, res: Response) => {
       show_id: new ObjectId(show_id),
     })
 
-    // Commit the transaction if everything goes well
-    await session.commitTransaction()
-    session.endSession()
-
-    return res.status(200).send(reservation)
+    return res.status(201).json(reservation)
   } catch (error) {
-    // Rollback transaction in case of any error
-    await session.abortTransaction()
-    session.endSession()
+    // Release any seats we flipped so a failed reservation never holds seats
+    await Seat.updateMany(
+      { _id: { $in: seat_ids_array }, reservedBy: userObjectId },
+      { isAvailable: true, reservedBy: null }
+    )
     if (error instanceof Error) {
-      res.status(500).json({ message: error.message })
+      return res.status(409).json({ message: error.message })
     }
+    return res.status(500).json({ message: "Failed to create reservation." })
   }
 }
 
 const markReservationAsPaid = async (req: Request, res: Response) => {
   try {
     const { reservationId } = req.params
-    const reservation = await Reservation.findByIdAndUpdate(
-      reservationId,
-      { is_paid: true },
-      { new: true }
-    ).populate("show_id") // Populate show_id to get details for ticket creation
+    const reservation = await Reservation.findById(reservationId).populate(
+      "show_id"
+    )
 
     if (!reservation) {
       return res.status(404).json({ message: "Reservation not found." })
     }
+    if (reservation.is_paid) {
+      return res
+        .status(400)
+        .json({ message: "Reservation has already been paid." })
+    }
 
-    // Assuming a default price per seat for now, as Show model doesn't have it.
-    // In a real application, this price would come from the Show or Movie model.
-    const PRICE_PER_SEAT = 10
-    const totalPrice = reservation.seat_ids.length * PRICE_PER_SEAT
+    reservation.is_paid = true
+    await reservation.save()
+
+    // Price per seat comes from the hall layout (e.g. "20$")
+    const show = reservation.show_id as {
+      hall_id?: string
+    } | null
+    const hallLayout = show?.hall_id === "1" ? layout1 : layout2
+    const pricePerSeat = parseInt(hallLayout.price, 10) || 0
+    const totalPrice = reservation.seat_ids.length * pricePerSeat
 
     // Create a new Ticket document
     const ticket = await Ticket.create({
@@ -149,13 +177,11 @@ const markReservationAsPaid = async (req: Request, res: Response) => {
       purchase_date: new Date(),
     })
 
-    res
-      .status(200)
-      .json({
-        message: "Reservation marked as paid and ticket created.",
-        reservation,
-        ticket,
-      })
+    res.status(200).json({
+      message: "Reservation marked as paid and ticket created.",
+      reservation,
+      ticket,
+    })
   } catch (error) {
     if (error instanceof Error) {
       res.status(500).json({ message: error.message })

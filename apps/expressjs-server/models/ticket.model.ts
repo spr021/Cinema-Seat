@@ -8,6 +8,7 @@ export interface ITicket extends Document {
   reservation_id: Types.ObjectId
   purchase_date: Date
   price: number
+  is_used: boolean
 }
 
 const TicketSchema: Schema = new Schema({
@@ -22,6 +23,8 @@ const TicketSchema: Schema = new Schema({
   },
   purchase_date: { type: Date, default: Date.now },
   price: { type: Number, required: true },
+  // Without this field the validation endpoint could never persist usage
+  is_used: { type: Boolean, default: false },
 })
 
 export default model("Ticket", TicketSchema)

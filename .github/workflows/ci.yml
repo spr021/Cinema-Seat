@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Cache MongoDB test binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.mongodb-binaries
+          key: mongodb-memory-server-${{ runner.os }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck all apps
+        run: |
+          (cd apps/expressjs-server && npx tsc --noEmit)
+          (cd apps/nextjs-adminweb && npx tsc --noEmit)
+          (cd apps/reactnative-userapp && npx tsc --noEmit)
+
+      - name: Run tests
+        run: |
+          (cd apps/expressjs-server && yarn test)
+          (cd apps/reactnative-userapp && yarn test)
+
+      - name: Build admin panel
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+        run: (cd apps/nextjs-adminweb && yarn build)

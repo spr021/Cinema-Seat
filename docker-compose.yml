@@ -1,0 +1,42 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/expressjs-server/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      MONGO_DB_URL: mongodb://mongo:27017/cinema-db
+      JWT_SECRET_KEY: dev-secret-change-me
+      JWT_SECRET_EXPIER: 10d
+      # Set these to enable Stripe Checkout + real SMTP
+      # STRIPE_SECRET_KEY: sk_test_...
+      # STRIPE_WEBHOOK_SECRET: whsec_...
+      EMAILS_DISABLED: "true"
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/nextjs-adminweb/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:

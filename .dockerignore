@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.git
+.turbo
+**/.turbo
+.expo
+**/.expo
+*.tsbuildinfo
+**/*.env
+.env*

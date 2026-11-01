@@ -19,6 +19,9 @@ interface Movie {
   year: string
   rating?: number
   summary?: string
+  director?: string
+  actors?: string[]
+  trailerUrl?: string
   shows: string[]
   createdAt?: string
   updatedAt?: string
@@ -67,10 +70,13 @@ export default function Movies() {
     year: "",
     rating: 0,
     summary: "",
+    director: "",
+    actors: "", // comma-separated in the form, sent as an array
+    trailerUrl: "",
   })
 
   // API URL
-  const API_URL = "http://localhost:4000" // Assuming your backend is running on localhost:3000
+  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
   // Fetch movies on component mount
   useEffect(() => {
@@ -119,6 +125,9 @@ export default function Movies() {
       year: "",
       rating: 0,
       summary: "",
+      director: "",
+      actors: "",
+      trailerUrl: "",
     })
     setIsEditing(false)
     setIsModalOpen(true)
@@ -134,6 +143,9 @@ export default function Movies() {
       year: movie.year,
       rating: movie.rating || 0,
       summary: movie.summary || "",
+      director: movie.director || "",
+      actors: (movie.actors || []).join(", "),
+      trailerUrl: movie.trailerUrl || "",
     })
     setCurrentMovie(movie)
     setIsEditing(true)
@@ -160,6 +172,15 @@ export default function Movies() {
     })
   }
 
+  // Build the API payload; actors goes to the backend as an array
+  const buildPayload = () => ({
+    ...formData,
+    actors: formData.actors
+      .split(",")
+      .map((actor) => actor.trim())
+      .filter(Boolean),
+  })
+
   // Handle form submission (Create/Update)
   const handleSubmit = async () => {
     try {
@@ -172,7 +193,7 @@ export default function Movies() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(buildPayload()),
         })
 
         if (!response.ok) {
@@ -206,7 +227,7 @@ export default function Movies() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(buildPayload()),
         })
 
         if (!response.ok) {
@@ -585,6 +606,66 @@ export default function Movies() {
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                 min="0"
                                 max="10"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="director"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Director
+                            </label>
+                            <div className="mt-2">
+                              <input
+                                type="text"
+                                name="director"
+                                id="director"
+                                value={formData.director}
+                                onChange={handleInputChange}
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                placeholder="Director name"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="actors"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Actors (comma separated)
+                            </label>
+                            <div className="mt-2">
+                              <input
+                                type="text"
+                                name="actors"
+                                id="actors"
+                                value={formData.actors}
+                                onChange={handleInputChange}
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                placeholder="Actor One, Actor Two"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="trailerUrl"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Trailer URL
+                            </label>
+                            <div className="mt-2">
+                              <input
+                                type="text"
+                                name="trailerUrl"
+                                id="trailerUrl"
+                                value={formData.trailerUrl}
+                                onChange={handleInputChange}
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                placeholder="https://youtube.com/watch?v=..."
                               />
                             </div>
                           </div>

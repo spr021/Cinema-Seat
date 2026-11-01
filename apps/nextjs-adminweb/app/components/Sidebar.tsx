@@ -6,12 +6,8 @@ import {
   Bars3Icon,
   HomeIcon,
   UsersIcon,
-  ShoppingBagIcon,
-  CogIcon,
-  ChartBarIcon,
   CalendarIcon,
   VideoCameraIcon,
-  // ArrowLeftOnRectangleIcon, // Import the logout icon
   ArrowLeftEndOnRectangleIcon,
 } from "@heroicons/react/24/outline"
 import Link from "next/link"
@@ -24,9 +20,6 @@ const navigation = [
   { name: "Movies", href: "/dashboard/movies", icon: VideoCameraIcon },
   { name: "Shows", href: "/dashboard/shows", icon: CalendarIcon },
   { name: "Users", href: "/dashboard/users", icon: UsersIcon },
-  { name: "Products", href: "/dashboard/products", icon: ShoppingBagIcon },
-  { name: "Analytics", href: "/dashboard/analytics", icon: ChartBarIcon },
-  { name: "Settings", href: "/dashboard/settings", icon: CogIcon },
 ]
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {

@@ -1,14 +1,14 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import listPlugin from "@fullcalendar/list"
 import { Dialog, Transition } from "@headlessui/react"
-import { Fragment, useEffect } from "react"
-import { format, parseISO, formatISO } from "date-fns"
+import { Fragment, useEffect, useMemo, useState } from "react"
+import { format, formatISO } from "date-fns"
 import type { EventContentArg } from "@fullcalendar/core"
 import "../../styles/full-calendar.css"
 
@@ -36,6 +36,8 @@ interface Hall {
   seats: []
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+
 export default function Shows() {
   const calendarRef = useRef<FullCalendar | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -50,11 +52,14 @@ export default function Shows() {
     price: 0,
     end: "",
   })
+  // Show being edited (id) and the new datetime picked in the edit dialog
+  const [editShowId, setEditShowId] = useState<string | null>(null)
+  const [editDate, setEditDate] = useState("")
 
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch("http://localhost:4000/movie")
+        const response = await fetch(`${API_URL}/movie`)
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
@@ -67,7 +72,7 @@ export default function Shows() {
 
     const fetchHalls = async () => {
       try {
-        const response = await fetch("http://localhost:4000/hall")
+        const response = await fetch(`${API_URL}/hall`)
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
@@ -83,7 +88,7 @@ export default function Shows() {
   }, [])
 
   const fetchShows = async (start?: string, end?: string) => {
-    let url = "http://localhost:4000/show/list"
+    let url = `${API_URL}/show/list`
 
     if (start && end) {
       const encodedStart = encodeURIComponent(start)
@@ -97,15 +102,46 @@ export default function Shows() {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
-      for (const show of data) {
-        show.date = parseISO(show.date).toISOString()
-      }
-
-      setShows(data)
+      // The API returns movie_id/hall_id; normalize to the camelCase shape used here
+      setShows(
+        data.map(
+          (show: {
+            _id: string
+            date: string
+            movie_id: string
+            hall_id: string
+          }) => ({
+            _id: show._id,
+            date: show.date,
+            movieId: show.movie_id,
+            hallId: show.hall_id,
+            price: 0,
+          })
+        )
+      )
     } catch (error) {
       console.error("Could not fetch shows:", error)
     }
   }
+
+  // FullCalendar needs a title and start; build event inputs from shows + movies
+  const events = useMemo(
+    () =>
+      shows.map((show) => {
+        const movie = movies.find((m) => m._id === show.movieId)
+        return {
+          id: show._id,
+          title: movie?.title ?? "Unknown movie",
+          start: show.date,
+          extendedProps: {
+            _id: show._id,
+            hallId: show.hallId,
+            movieId: show.movieId,
+          },
+        }
+      }),
+    [shows, movies]
+  )
 
   useEffect(() => {
     // Initial fetch for shows when component mounts
@@ -127,15 +163,24 @@ export default function Shows() {
     setIsModalOpen(true)
   }
 
-  const handleEditShow = async (showId: string) => {
+  const openEditDialog = (showId: string) => {
+    const show = shows.find((s) => s._id === showId)
+    if (!show) return
+    setEditShowId(showId)
+    // datetime-local expects "YYYY-MM-DDTHH:mm" in local time
+    setEditDate(format(new Date(show.date), "yyyy-MM-dd'T'HH:mm"))
+  }
+
+  const handleEditShow = async () => {
+    if (!editShowId || !editDate) return
     try {
-      const response = await fetch(`http://localhost:4000/show/${showId}`, {
+      const response = await fetch(`${API_URL}/show/${editShowId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          date: newShow.start,
+          date: new Date(editDate).toISOString(),
         }),
       })
 
@@ -144,7 +189,12 @@ export default function Shows() {
       }
 
       const data = await response.json()
-      setShows(shows.map((show) => (show._id === showId ? data : show)))
+      setShows(
+        shows.map((show) =>
+          show._id === editShowId ? { ...show, date: data.date } : show
+        )
+      )
+      setEditShowId(null)
     } catch (error) {
       console.error("Could not update show:", error)
     }
@@ -152,7 +202,7 @@ export default function Shows() {
 
   const handleDeleteShow = async (showId: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/show/${showId}`, {
+      const response = await fetch(`${API_URL}/show/${showId}`, {
         method: "DELETE",
       })
 
@@ -168,27 +218,33 @@ export default function Shows() {
 
   const handleCreateShow = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:4000/show/create/${newShow.movieId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            date: newShow.start,
-            hall_id: newShow.hallId,
-            movie_id: newShow.movieId,
-          }),
-        }
-      )
+      const response = await fetch(`${API_URL}/show/create/${newShow.movieId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: newShow.start,
+          hall_id: newShow.hallId,
+          movie_id: newShow.movieId,
+        }),
+      })
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
       const data = await response.json()
-      setShows([...shows, data])
+      setShows([
+        ...shows,
+        {
+          _id: data._id,
+          date: data.date,
+          movieId: data.movie_id,
+          hallId: data.hall_id,
+          price: 0,
+        },
+      ])
 
       setIsModalOpen(false)
       setNewShow({
@@ -215,7 +271,7 @@ export default function Shows() {
           {eventInfo.event._def.extendedProps.title}
         </div>
         <div className="text-xs text-white/90 truncate">
-          {eventInfo.timeText} • Hall 1
+          {eventInfo.timeText} • {hall?.name ?? "Hall"}
         </div>
         <button
           className="text-red-500 hover:text-red-700"
@@ -227,7 +283,9 @@ export default function Shows() {
         </button>
         <button
           className="text-blue-500 hover:text-blue-700"
-          onClick={() => handleEditShow(eventInfo.event._def.extendedProps._id)}
+          onClick={() =>
+            openEditDialog(eventInfo.event._def.extendedProps._id)
+          }
         >
           Edit
         </button>
@@ -287,7 +345,7 @@ export default function Shows() {
             selectMirror={true}
             dayMaxEvents={true}
             weekends={true}
-            events={shows}
+            events={events}
             select={handleDateSelect}
             datesSet={handleDatesSet} // Add this prop
             height="calc(100vh - 200px)"
@@ -439,6 +497,80 @@ export default function Shows() {
                         onClick={handleCreateShow}
                       >
                         Create Show
+                      </button>
+                    </div>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Edit Show Modal */}
+      <Transition show={editShowId !== null} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setEditShowId(null)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="transition ease-in-out duration-300 transform"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="transition ease-in-out duration-300 transform"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-semibold leading-6 text-gray-900 mb-6"
+                  >
+                    Edit Show
+                  </Dialog.Title>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date and time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                      />
+                    </div>
+                    <div className="mt-6 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        onClick={() => setEditShowId(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        onClick={handleEditShow}
+                      >
+                        Save Changes
                       </button>
                     </div>
                   </div>

@@ -28,6 +28,16 @@ const MovieSchema = new Schema(
     summary: {
       type: String,
     },
+    director: {
+      type: String,
+    },
+    actors: {
+      type: [String],
+      default: [],
+    },
+    trailerUrl: {
+      type: String,
+    },
     shows: {
       type: [Schema.Types.ObjectId],
       ref: "Show",
